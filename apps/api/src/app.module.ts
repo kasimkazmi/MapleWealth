@@ -6,6 +6,9 @@ import { ProfileModule } from './profile/profile.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { GoalsModule } from './goals/goals.module';
+import { InvestmentsModule } from './investments/investments.module';
+import { ContributionsModule } from './contributions/contributions.module';
+import { DividendsModule } from './dividends/dividends.module';
 
 @Module({
   imports: [
@@ -14,6 +17,9 @@ import { GoalsModule } from './goals/goals.module';
     AccountsModule,
     TransactionsModule,
     GoalsModule,
+    InvestmentsModule,
+    ContributionsModule,
+    DividendsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
