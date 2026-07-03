@@ -12,6 +12,7 @@ import { DividendsModule } from './dividends/dividends.module';
 import { ProjectionsModule } from './projections/projections.module';
 import { RulesModule } from './rules/rules.module';
 import { ImportsModule } from './imports/imports.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ImportsModule } from './imports/imports.module';
     ProjectionsModule,
     RulesModule,
     ImportsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
