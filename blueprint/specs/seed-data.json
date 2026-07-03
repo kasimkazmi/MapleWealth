@@ -1,0 +1,78 @@
+{
+  "profile": {
+    "age": 30,
+    "country": "Canada",
+    "career": "Software Developer",
+    "annualSalary": 37000,
+    "monthlyTakeHome": 2800,
+    "monthlyExpenses": 1500,
+    "targetNetWorth": 100000
+  },
+  "accounts": [
+    {
+      "institution": "Neo",
+      "name": "Neo Savings",
+      "type": "savings",
+      "purpose": "vacation",
+      "balance": 3000
+    },
+    {
+      "institution": "CIBC",
+      "name": "CIBC Savings",
+      "type": "savings",
+      "purpose": "emergency",
+      "balance": 1000
+    },
+    {
+      "institution": "Wealthsimple",
+      "name": "Self-Directed TFSA",
+      "type": "tfsa",
+      "purpose": "investment",
+      "balance": 10
+    },
+    {
+      "institution": "Wealthsimple",
+      "name": "Chequing 1",
+      "type": "chequing",
+      "purpose": "general",
+      "balance": 0
+    },
+    {
+      "institution": "Wealthsimple",
+      "name": "Chequing 2",
+      "type": "chequing",
+      "purpose": "general",
+      "balance": 0
+    }
+  ],
+  "recurringRules": [
+    {
+      "type": "deposit",
+      "account": "Self-Directed TFSA",
+      "amount": 50,
+      "frequency": "monthly"
+    }
+  ],
+  "holdings": [
+    {
+      "symbol": "XEQT",
+      "name": "iShares Core Equity ETF Portfolio",
+      "assetType": "etf",
+      "account": "Self-Directed TFSA"
+    }
+  ],
+  "goals": [
+    {
+      "name": "Emergency Fund Minimum",
+      "target": 5000
+    },
+    {
+      "name": "Emergency Fund Ideal",
+      "target": 8000
+    },
+    {
+      "name": "Net Worth Target",
+      "target": 100000
+    }
+  ]
+}
