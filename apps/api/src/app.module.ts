@@ -9,6 +9,9 @@ import { GoalsModule } from './goals/goals.module';
 import { InvestmentsModule } from './investments/investments.module';
 import { ContributionsModule } from './contributions/contributions.module';
 import { DividendsModule } from './dividends/dividends.module';
+import { ProjectionsModule } from './projections/projections.module';
+import { RulesModule } from './rules/rules.module';
+import { ImportsModule } from './imports/imports.module';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import { DividendsModule } from './dividends/dividends.module';
     InvestmentsModule,
     ContributionsModule,
     DividendsModule,
+    ProjectionsModule,
+    RulesModule,
+    ImportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
