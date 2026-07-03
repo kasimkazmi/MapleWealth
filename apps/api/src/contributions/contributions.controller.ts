@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Query, Body, UseInterceptors } from '@nestjs/common';
-import { ContributionsService, RecordContributionDto } from './contributions.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
+  UseInterceptors,
+} from '@nestjs/common';
+import {
+  ContributionsService,
+  RecordContributionDto,
+} from './contributions.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserInterceptor } from '../common/interceptors/user.interceptor';
-import { AccountType } from '@maplewealth/db';
+import type { AccountType, User } from '@maplewealth/db';
 
 @Controller('registered-accounts')
 @UseInterceptors(UserInterceptor)
@@ -11,7 +21,7 @@ export class ContributionsController {
 
   @Get('contributions')
   getContributions(
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
     @Query('type') type?: AccountType,
     @Query('year') year?: string,
   ) {
@@ -20,12 +30,15 @@ export class ContributionsController {
   }
 
   @Post('contributions')
-  recordContribution(@CurrentUser() user: any, @Body() body: RecordContributionDto) {
+  recordContribution(
+    @CurrentUser() user: User,
+    @Body() body: RecordContributionDto,
+  ) {
     return this.contributionsService.recordContribution(user.id, body);
   }
 
   @Get('room')
-  getContributionRoom(@CurrentUser() user: any) {
+  getContributionRoom(@CurrentUser() user: User) {
     return this.contributionsService.getContributionRoom(user.id);
   }
 }

@@ -1,14 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { RulesService } from '../rules/rules.service';
+import { RulesService, RuleResult } from '../rules/rules.service';
 import { ContributionsService } from '../contributions/contributions.service';
+import type { FinancialProfile } from '@maplewealth/db';
+
+type ContributionRoom = Awaited<
+  ReturnType<ContributionsService['getContributionRoom']>
+>;
 
 @Injectable()
 export class ReportsService {
   constructor(
     private prisma: PrismaService,
     private rulesService: RulesService,
-    private contributionsService: ContributionsService
+    private contributionsService: ContributionsService,
   ) {}
 
   async getMonthlyReport(userId: string, monthStr: string) {
@@ -17,31 +22,49 @@ export class ReportsService {
   }
 
   async generateReportData(userId: string, monthStr: string) {
-    const profile = await this.prisma.financialProfile.findUnique({ where: { userId } });
-    const accounts = await this.prisma.account.findMany({ where: { userId, isActive: true } });
-    const goals = await this.prisma.goal.findMany({ where: { userId } });
-    
+    const profile = await this.prisma.financialProfile.findUnique({
+      where: { userId },
+    });
+    const accounts = await this.prisma.account.findMany({
+      where: { userId, isActive: true },
+    });
+
     // Calculate net worth
-    const assets = accounts.filter(a => a.type !== 'credit_card' && a.type !== 'loan').reduce((sum, a) => sum + Number(a.currentBalance), 0);
-    const debts = accounts.filter(a => a.type === 'credit_card' || a.type === 'loan').reduce((sum, a) => sum + Number(a.currentBalance), 0);
+    const assets = accounts
+      .filter((a) => a.type !== 'credit_card' && a.type !== 'loan')
+      .reduce((sum, a) => sum + Number(a.currentBalance), 0);
+    const debts = accounts
+      .filter((a) => a.type === 'credit_card' || a.type === 'loan')
+      .reduce((sum, a) => sum + Number(a.currentBalance), 0);
     const netWorth = assets - debts;
 
     // Filter transactions for this month
     const startOfMonth = new Date(`${monthStr}-01T00:00:00`);
-    const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0, 23, 59, 59);
+    const endOfMonth = new Date(
+      startOfMonth.getFullYear(),
+      startOfMonth.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
 
     const transactions = await this.prisma.transaction.findMany({
       where: {
         userId,
         date: {
           gte: startOfMonth,
-          lte: endOfMonth
-        }
-      }
+          lte: endOfMonth,
+        },
+      },
     });
 
-    const income = transactions.filter(t => Number(t.amount) > 0).reduce((sum, t) => sum + Number(t.amount), 0);
-    const expenses = transactions.filter(t => Number(t.amount) < 0).reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+    const income = transactions
+      .filter((t) => Number(t.amount) > 0)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const expenses = transactions
+      .filter((t) => Number(t.amount) < 0)
+      .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
     const savings = income - expenses;
     const savingsRate = income > 0 ? (savings / income) * 100 : 0;
 
@@ -60,7 +83,7 @@ export class ReportsService {
       netWorth,
       warnings,
       room,
-      profile
+      profile,
     });
 
     return {
@@ -71,11 +94,11 @@ export class ReportsService {
         totalExpenses: expenses,
         savings,
         savingsRate: Math.round(savingsRate * 100) / 100,
-        netWorth
+        netWorth,
       },
-      warnings: warnings.filter(w => w.status !== 'pass'),
+      warnings: warnings.filter((w) => w.status !== 'pass'),
       registeredAccountLimits: room,
-      summary: reportText
+      summary: reportText,
     };
   }
 
@@ -86,12 +109,15 @@ export class ReportsService {
     savings: number;
     savingsRate: number;
     netWorth: number;
-    warnings: any[];
-    room: any;
-    profile: any;
+    warnings: RuleResult[];
+    room: ContributionRoom;
+    profile: FinancialProfile | null;
   }) {
-    const hasCriticalWarning = data.warnings.some(w => w.severity === 'high');
-    const overcontributed = data.room.tfsa.overLimit || data.room.fhsa.overLimit || data.room.rrsp.overLimit;
+    const hasCriticalWarning = data.warnings.some((w) => w.severity === 'high');
+    const overcontributed =
+      data.room.tfsa.overLimit ||
+      data.room.fhsa.overLimit ||
+      data.room.rrsp.overLimit;
 
     let review = `### Monthly Financial Review for ${data.monthStr}\n\n`;
 
@@ -104,11 +130,11 @@ export class ReportsService {
 
     review += `#### 🛡 Risk & Warnings\n`;
     if (hasCriticalWarning) {
-      const crit = data.warnings.find(w => w.severity === 'high');
+      const crit = data.warnings.find((w) => w.severity === 'high')!;
       review += `⚠️ **CRITICAL ACTION REQUIRED:** ${crit.message}\n> *Action:* ${crit.recommended_action}\n\n`;
     } else if (data.warnings.length > 0) {
       review += `🔔 **Alerts:**\n`;
-      data.warnings.forEach(w => {
+      data.warnings.forEach((w) => {
         if (w.status !== 'pass') {
           review += `- [${w.severity.toUpperCase()}] **${w.source_rule}:** ${w.message} *Recommended Action:* ${w.recommended_action}\n`;
         }
@@ -123,7 +149,9 @@ export class ReportsService {
     review += `- **FHSA:** **$${data.room.fhsa.roomRemaining.toLocaleString('en-CA')}** remaining. (Keep HISA-based until home buying is active).\n`;
     review += `- **RRSP:** Room remaining: **$${data.room.rrsp.roomRemaining.toLocaleString('en-CA')}**${data.room.rrsp.isEstimate ? ' (estimated — enter your CRA Notice of Assessment room for an exact figure)' : ''}. ${data.profile && Number(data.profile.annualSalary) < 70000 ? 'ℹ️ Priority is low since salary is below $70k.' : 'Utilize for optimal tax deductions.'}\n\n`;
 
-    const monthlySavingsCapacity = data.profile ? Number(data.profile.savingsCapacity) : 0;
+    const monthlySavingsCapacity = data.profile
+      ? Number(data.profile.savingsCapacity)
+      : 0;
 
     review += `#### 🎯 Next Action Recommendation\n`;
     if (hasCriticalWarning) {

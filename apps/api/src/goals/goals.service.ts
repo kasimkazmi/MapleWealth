@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoalType } from '@maplewealth/db';
+import type { Prisma } from '@maplewealth/db';
 
 export class CreateGoalDto {
   name!: string;
@@ -94,12 +95,17 @@ export class GoalsService {
       throw new NotFoundException('Goal not found');
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.GoalUpdateInput = {};
     if (data.name) updateData.name = data.name;
     if (data.type) updateData.type = data.type;
-    if (data.targetAmount !== undefined) updateData.targetAmount = data.targetAmount;
-    if (data.currentAmount !== undefined) updateData.currentAmount = data.currentAmount;
-    if (data.targetDate !== undefined) updateData.targetDate = data.targetDate ? new Date(data.targetDate) : null;
+    if (data.targetAmount !== undefined)
+      updateData.targetAmount = data.targetAmount;
+    if (data.currentAmount !== undefined)
+      updateData.currentAmount = data.currentAmount;
+    if (data.targetDate !== undefined)
+      updateData.targetDate = data.targetDate
+        ? new Date(data.targetDate)
+        : null;
     if (data.priority !== undefined) updateData.priority = data.priority;
 
     return this.prisma.goal.update({

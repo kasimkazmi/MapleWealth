@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 export class RecordDividendDto {
@@ -19,13 +23,13 @@ export class DividendsService {
       where: { userId },
       include: {
         account: {
-          select: { name: true }
+          select: { name: true },
         },
         holding: {
-          select: { symbol: true }
-        }
+          select: { symbol: true },
+        },
       },
-      orderBy: { payDate: 'desc' }
+      orderBy: { payDate: 'desc' },
     });
   }
 
@@ -33,14 +37,14 @@ export class DividendsService {
     return this.prisma.$transaction(async (tx) => {
       // 1. Validate account and holding
       const account = await tx.account.findFirst({
-        where: { id: data.accountId, userId }
+        where: { id: data.accountId, userId },
       });
       if (!account) {
         throw new NotFoundException('Account not found');
       }
 
       const holding = await tx.holding.findFirst({
-        where: { id: data.holdingId, accountId: data.accountId, userId }
+        where: { id: data.holdingId, accountId: data.accountId, userId },
       });
       if (!holding) {
         throw new NotFoundException('Holding not found in this account');
@@ -55,21 +59,24 @@ export class DividendsService {
           payDate: new Date(data.payDate),
           amount: data.amount,
           reinvested: data.reinvested,
-          dripQuantity: data.reinvested ? data.dripQuantity : null
-        }
+          dripQuantity: data.reinvested ? data.dripQuantity : null,
+        },
       });
 
       // 3. Handle cash and holdings updates based on DRIP setting
       if (data.reinvested) {
         if (!data.dripQuantity || data.dripQuantity <= 0) {
-          throw new BadRequestException('dripQuantity must be specified and greater than zero for reinvested dividends');
+          throw new BadRequestException(
+            'dripQuantity must be specified and greater than zero for reinvested dividends',
+          );
         }
 
         // Reinvested Dividend:
         // - Holding quantity increases by dripQuantity.
         // - ACB (averageCost) recalculation:
         //   New Average Cost = (Prev Qty * Prev Avg Cost + Reinvested Amount) / New Qty
-        const prevTotalCost = Number(holding.quantity) * Number(holding.averageCost);
+        const prevTotalCost =
+          Number(holding.quantity) * Number(holding.averageCost);
         const newQty = Number(holding.quantity) + data.dripQuantity;
         const newACB = (prevTotalCost + data.amount) / newQty;
 
@@ -77,8 +84,8 @@ export class DividendsService {
           where: { id: holding.id },
           data: {
             quantity: newQty,
-            averageCost: newACB
-          }
+            averageCost: newACB,
+          },
         });
 
         // Add Transaction of type investment reinvestment (net-zero impact on cash balance because cash was received and immediately spent, but let's log the transaction for tracking)
@@ -92,10 +99,9 @@ export class DividendsService {
             category: 'Dividend Reinvestment',
             merchant: holding.symbol,
             description: `Reinvested $${data.amount} dividend for ${data.dripQuantity} shares of ${holding.symbol}`,
-            source: 'manual'
-          }
+            source: 'manual',
+          },
         });
-
       } else {
         // Cash Dividend:
         // - Account balance increases by dividend amount.
@@ -103,9 +109,9 @@ export class DividendsService {
           where: { id: data.accountId },
           data: {
             currentBalance: {
-              increment: data.amount
-            }
-          }
+              increment: data.amount,
+            },
+          },
         });
 
         // Add Transaction of type inflow
@@ -119,8 +125,8 @@ export class DividendsService {
             category: 'Dividend Payout',
             merchant: holding.symbol,
             description: `Received $${data.amount} cash dividend from ${holding.symbol}`,
-            source: 'manual'
-          }
+            source: 'manual',
+          },
         });
       }
 

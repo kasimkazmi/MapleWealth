@@ -1,16 +1,18 @@
 import { Controller, Post, Body, UseInterceptors } from '@nestjs/common';
-import { ProjectionsService, CompoundGrowthDto, NetWorthProjectionDto, EfCompletionDto } from './projections.service';
+import {
+  ProjectionsService,
+  CompoundGrowthDto,
+  NetWorthProjectionDto,
+  EfCompletionDto,
+} from './projections.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { User } from '@maplewealth/db';
 import { UserInterceptor } from '../common/interceptors/user.interceptor';
-import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('projections')
 @UseInterceptors(UserInterceptor)
 export class ProjectionsController {
-  constructor(
-    private readonly projectionsService: ProjectionsService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly projectionsService: ProjectionsService) {}
 
   @Post('compound-growth')
   calculateCompoundGrowth(@Body() body: CompoundGrowthDto) {
@@ -18,12 +20,18 @@ export class ProjectionsController {
   }
 
   @Post('net-worth')
-  projectNetWorth(@CurrentUser() user: any, @Body() body: NetWorthProjectionDto) {
-    return this.projectionsService.projectNetWorth(user.id, this.prisma, body);
+  projectNetWorth(
+    @CurrentUser() user: User,
+    @Body() body: NetWorthProjectionDto,
+  ) {
+    return this.projectionsService.projectNetWorth(user.id, body);
   }
 
   @Post('emergency-fund-completion')
-  calculateEfCompletion(@CurrentUser() user: any, @Body() body: EfCompletionDto) {
-    return this.projectionsService.calculateEfCompletion(user.id, this.prisma, body);
+  calculateEfCompletion(
+    @CurrentUser() user: User,
+    @Body() body: EfCompletionDto,
+  ) {
+    return this.projectionsService.calculateEfCompletion(user.id, body);
   }
 }

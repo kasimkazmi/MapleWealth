@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 export class CompoundGrowthDto {
   principal!: number;
@@ -21,7 +22,8 @@ export class EfCompletionDto {
 
 @Injectable()
 export class ProjectionsService {
-  
+  constructor(private prisma: PrismaService) {}
+
   // Calculate nominal vs inflation-adjusted real compound growth
   calculateCompoundGrowth(data: CompoundGrowthDto) {
     const principal = data.principal;
@@ -36,7 +38,7 @@ export class ProjectionsService {
     // Compounding month-by-month
     for (let month = 0; month <= totalMonths; month++) {
       const yearFraction = month / 12;
-      
+
       if (month > 0) {
         // Add interest and contribution monthly
         currentNominal = currentNominal * (1 + r / 12) + monthlyContribution;
@@ -67,28 +69,33 @@ export class ProjectionsService {
       summary: {
         finalNominalValue: series[series.length - 1].nominalValue,
         finalRealValue: series[series.length - 1].realValue,
-        purchasingPowerLost: Math.round((series[series.length - 1].nominalValue - series[series.length - 1].realValue) * 100) / 100,
+        purchasingPowerLost:
+          Math.round(
+            (series[series.length - 1].nominalValue -
+              series[series.length - 1].realValue) *
+              100,
+          ) / 100,
       },
       series,
     };
   }
 
   // Project net worth into the future based on user's current profile and active assets
-  async projectNetWorth(userId: string, prisma: any, data: NetWorthProjectionDto) {
-    const profile = await prisma.financialProfile.findUnique({
-      where: { userId }
+  async projectNetWorth(userId: string, data: NetWorthProjectionDto) {
+    const profile = await this.prisma.financialProfile.findUnique({
+      where: { userId },
     });
-    const accounts = await prisma.account.findMany({
-      where: { userId, isActive: true }
+    const accounts = await this.prisma.account.findMany({
+      where: { userId, isActive: true },
     });
 
     const assets = accounts
-      .filter((a: any) => a.type !== 'credit_card' && a.type !== 'loan')
-      .reduce((sum: number, a: any) => sum + Number(a.currentBalance), 0);
+      .filter((a) => a.type !== 'credit_card' && a.type !== 'loan')
+      .reduce((sum, a) => sum + Number(a.currentBalance), 0);
 
     const debts = accounts
-      .filter((a: any) => a.type === 'credit_card' || a.type === 'loan')
-      .reduce((sum: number, a: any) => sum + Number(a.currentBalance), 0);
+      .filter((a) => a.type === 'credit_card' || a.type === 'loan')
+      .reduce((sum, a) => sum + Number(a.currentBalance), 0);
 
     const currentNetWorth = assets - debts;
     const monthlyContribution = profile ? Number(profile.savingsCapacity) : 0;
@@ -103,11 +110,14 @@ export class ProjectionsService {
   }
 
   // Calculate emergency fund completion date
-  async calculateEfCompletion(userId: string, prisma: any, data: EfCompletionDto) {
-    const accounts = await prisma.account.findMany({
-      where: { userId, isActive: true, purpose: 'emergency' }
+  async calculateEfCompletion(userId: string, data: EfCompletionDto) {
+    const accounts = await this.prisma.account.findMany({
+      where: { userId, isActive: true, purpose: 'emergency' },
     });
-    const currentEfBalance = accounts.reduce((sum: number, a: any) => sum + Number(a.currentBalance), 0);
+    const currentEfBalance = accounts.reduce(
+      (sum, a) => sum + Number(a.currentBalance),
+      0,
+    );
 
     const target = data.targetAmount;
     const monthlyAllocation = data.monthlyAllocation;
@@ -118,7 +128,7 @@ export class ProjectionsService {
         targetAmount: target,
         monthsToTarget: 0,
         alreadyReached: true,
-        completionDate: new Date().toISOString().split('T')[0]
+        completionDate: new Date().toISOString().split('T')[0],
       };
     }
 
@@ -128,13 +138,14 @@ export class ProjectionsService {
         targetAmount: target,
         monthsToTarget: null,
         alreadyReached: false,
-        message: 'No savings allocated to the Emergency Fund; target cannot be reached.'
+        message:
+          'No savings allocated to the Emergency Fund; target cannot be reached.',
       };
     }
 
     const shortFall = target - currentEfBalance;
     const months = Math.ceil(shortFall / monthlyAllocation);
-    
+
     const completionDate = new Date();
     completionDate.setMonth(completionDate.getMonth() + months);
 
@@ -143,7 +154,7 @@ export class ProjectionsService {
       targetAmount: target,
       monthsToTarget: months,
       alreadyReached: false,
-      completionDate: completionDate.toISOString().split('T')[0]
+      completionDate: completionDate.toISOString().split('T')[0],
     };
   }
 }

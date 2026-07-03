@@ -17,11 +17,11 @@ export class UsersService {
             holdings: true,
             contributions: true,
             dividends: true,
-          }
+          },
         },
         goals: true,
         recurringRules: true,
-      }
+      },
     });
 
     if (!user) {
@@ -40,7 +40,7 @@ export class UsersService {
         createdAt: user.createdAt,
       },
       financialProfile: user.financialProfile,
-      accounts: user.accounts.map(acc => ({
+      accounts: user.accounts.map((acc) => ({
         id: acc.id,
         institution: acc.institution,
         name: acc.name,
@@ -52,17 +52,17 @@ export class UsersService {
         transactions: acc.transactions,
         holdings: acc.holdings,
         contributions: acc.contributions,
-        dividends: acc.dividends
+        dividends: acc.dividends,
       })),
       goals: user.goals,
-      recurringRules: user.recurringRules
+      recurringRules: user.recurringRules,
     };
   }
 
   // Permantently purge user account and all cascading data records
   async purgeUserAccount(userId: string) {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
     if (!user) {
       throw new NotFoundException('User profile not found');
@@ -71,13 +71,14 @@ export class UsersService {
     return this.prisma.$transaction(async (tx) => {
       // Deletes user from DB (Cascades delete profile, accounts, transactions, holdings, contributions, dividends, rules, goals, and sessions)
       await tx.user.delete({
-        where: { id: userId }
+        where: { id: userId },
       });
 
       return {
         userId,
         status: 'deleted',
-        message: 'Account and all associated financial records permanently purged.'
+        message:
+          'Account and all associated financial records permanently purged.',
       };
     });
   }

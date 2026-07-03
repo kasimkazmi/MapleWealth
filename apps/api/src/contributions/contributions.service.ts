@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountType } from '@maplewealth/db';
+import type { Prisma } from '@maplewealth/db';
 
 export class RecordContributionDto {
   accountId!: string;
@@ -14,7 +15,7 @@ export class ContributionsService {
 
   // Get contribution history
   async getContributions(userId: string, type?: AccountType, year?: number) {
-    const where: any = { userId };
+    const where: Prisma.ContributionWhereInput = { userId };
     if (type) {
       where.registeredAccountType = type;
     }
@@ -26,23 +27,29 @@ export class ContributionsService {
       where,
       include: {
         account: {
-          select: { name: true }
-        }
+          select: { name: true },
+        },
       },
-      orderBy: { date: 'desc' }
+      orderBy: { date: 'desc' },
     });
   }
 
   // Record a manual contribution (if not automatically logged via trades)
   async recordContribution(userId: string, data: RecordContributionDto) {
     const account = await this.prisma.account.findFirst({
-      where: { id: data.accountId, userId }
+      where: { id: data.accountId, userId },
     });
     if (!account) {
       throw new BadRequestException('Account not found');
     }
-    if (account.type !== 'tfsa' && account.type !== 'fhsa' && account.type !== 'rrsp') {
-      throw new BadRequestException('Contributions can only be recorded on TFSA, FHSA, or RRSP registered accounts');
+    if (
+      account.type !== 'tfsa' &&
+      account.type !== 'fhsa' &&
+      account.type !== 'rrsp'
+    ) {
+      throw new BadRequestException(
+        'Contributions can only be recorded on TFSA, FHSA, or RRSP registered accounts',
+      );
     }
 
     const date = new Date(data.date);
@@ -55,21 +62,21 @@ export class ContributionsService {
         registeredAccountType: account.type,
         date,
         amount: data.amount,
-        contributionYear
-      }
+        contributionYear,
+      },
     });
   }
 
   // Calculate live contribution room for TFSA, FHSA, and RRSP
   async getContributionRoom(userId: string) {
     const profile = await this.prisma.financialProfile.findUnique({
-      where: { userId }
+      where: { userId },
     });
     const currentYear = new Date().getFullYear();
 
     // 1. Fetch total contributions this year
     const contributions = await this.prisma.contribution.findMany({
-      where: { userId, contributionYear: currentYear }
+      where: { userId, contributionYear: currentYear },
     });
 
     const tfsaContributed = contributions
@@ -89,7 +96,9 @@ export class ContributionsService {
     // only authoritative source for unused prior-year room and there is no public API for it.
     // It represents unused room accumulated as of Jan 1 of the current year.
     const tfsaLimit = 7000;
-    const tfsaCarryForwardBase = profile ? Number(profile.tfsaCarryForwardBase) : 0;
+    const tfsaCarryForwardBase = profile
+      ? Number(profile.tfsaCarryForwardBase)
+      : 0;
     const tfsaRoom = tfsaLimit + tfsaCarryForwardBase - tfsaContributed;
 
     // 3. Setup FHSA calculations
@@ -97,14 +106,25 @@ export class ContributionsService {
     // fhsaCarryForwardBase should never exceed 8000 when the user enters it.
     const fhsaLimit = 8000;
     const fhsaLifetimeLimit = 40000;
-    const fhsaCarryForwardBase = profile ? Math.min(Number(profile.fhsaCarryForwardBase), fhsaLimit) : 0;
+    const fhsaCarryForwardBase = profile
+      ? Math.min(Number(profile.fhsaCarryForwardBase), fhsaLimit)
+      : 0;
     const pastFhsas = await this.prisma.contribution.findMany({
-      where: { userId, registeredAccountType: 'fhsa' }
+      where: { userId, registeredAccountType: 'fhsa' },
     });
-    const fhsaLifetimeContributed = pastFhsas.reduce((sum, c) => sum + Number(c.amount), 0);
+    const fhsaLifetimeContributed = pastFhsas.reduce(
+      (sum, c) => sum + Number(c.amount),
+      0,
+    );
 
-    const fhsaRoomLeft = Math.max(0, fhsaLimit + fhsaCarryForwardBase - fhsaContributed);
-    const fhsaLifetimeRoomLeft = Math.max(0, fhsaLifetimeLimit - fhsaLifetimeContributed);
+    const fhsaRoomLeft = Math.max(
+      0,
+      fhsaLimit + fhsaCarryForwardBase - fhsaContributed,
+    );
+    const fhsaLifetimeRoomLeft = Math.max(
+      0,
+      fhsaLifetimeLimit - fhsaLifetimeContributed,
+    );
 
     // 4. Setup RRSP calculations
     // rrspKnownRoom is the deduction limit from the user's latest CRA Notice of Assessment
@@ -128,7 +148,7 @@ export class ContributionsService {
         contributed: tfsaContributed,
         roomRemaining: tfsaRoom,
         overLimit: tfsaRoom < 0,
-        estimatedPenalty: tfsaRoom < 0 ? Math.abs(tfsaRoom) * 0.01 : 0
+        estimatedPenalty: tfsaRoom < 0 ? Math.abs(tfsaRoom) * 0.01 : 0,
       },
       fhsa: {
         limit: fhsaLimit,
@@ -137,8 +157,13 @@ export class ContributionsService {
         contributedThisYear: fhsaContributed,
         lifetimeContributed: fhsaLifetimeContributed,
         roomRemaining: Math.min(fhsaRoomLeft, fhsaLifetimeRoomLeft),
-        overLimit: fhsaContributed > fhsaLimit + fhsaCarryForwardBase || fhsaLifetimeContributed > fhsaLifetimeLimit,
-        estimatedPenalty: (fhsaContributed > fhsaLimit + fhsaCarryForwardBase ? (fhsaContributed - fhsaLimit - fhsaCarryForwardBase) * 0.01 : 0)
+        overLimit:
+          fhsaContributed > fhsaLimit + fhsaCarryForwardBase ||
+          fhsaLifetimeContributed > fhsaLifetimeLimit,
+        estimatedPenalty:
+          fhsaContributed > fhsaLimit + fhsaCarryForwardBase
+            ? (fhsaContributed - fhsaLimit - fhsaCarryForwardBase) * 0.01
+            : 0,
       },
       rrsp: {
         calculatedLimit: rrspBaseLimit,
@@ -147,8 +172,11 @@ export class ContributionsService {
         roomRemaining: rrspRoom,
         // RRSP allows a $2,000 lifetime overcontribution buffer before penalties kick in
         overLimit: rrspContributed > rrspBaseLimit + 2000,
-        estimatedPenalty: rrspContributed > rrspBaseLimit + 2000 ? (rrspContributed - rrspBaseLimit - 2000) * 0.01 : 0
-      }
+        estimatedPenalty:
+          rrspContributed > rrspBaseLimit + 2000
+            ? (rrspContributed - rrspBaseLimit - 2000) * 0.01
+            : 0,
+      },
     };
   }
 }

@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TransactionSource } from '@maplewealth/db';
+import type { Prisma } from '@maplewealth/db';
 import { randomUUID } from 'crypto';
 
 export class ImportCsvDto {
@@ -9,36 +14,54 @@ export class ImportCsvDto {
   institution!: 'cibc' | 'neo' | 'wealthsimple';
 }
 
+export interface ParsedTransaction {
+  id: string;
+  date: string;
+  amount: number;
+  category: string;
+  merchant: string;
+  description: string;
+  isDuplicate: boolean;
+}
+
 @Injectable()
 export class ImportsService {
   // In-memory cache for pending imports
-  private pendingImports = new Map<string, {
-    userId: string;
-    accountId: string;
-    transactions: any[];
-  }>();
+  private pendingImports = new Map<
+    string,
+    {
+      userId: string;
+      accountId: string;
+      transactions: ParsedTransaction[];
+    }
+  >();
 
   constructor(private prisma: PrismaService) {}
 
   async parseAndAnalyzeCsv(userId: string, data: ImportCsvDto) {
     const account = await this.prisma.account.findFirst({
-      where: { id: data.accountId, userId }
+      where: { id: data.accountId, userId },
     });
     if (!account) {
       throw new NotFoundException('Account not found');
     }
 
-    const lines = data.csvContent.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
+    const lines = data.csvContent
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
     if (lines.length < 2) {
       throw new BadRequestException('CSV file is empty or missing headers');
     }
 
     const headers = lines[0].toLowerCase().split(',');
-    const parsedTransactions = [];
+    const parsedTransactions: ParsedTransaction[] = [];
 
     // Simple CSV row parser
     for (let i = 1; i < lines.length; i++) {
-      const row = lines[i].split(',').map((val) => val.trim().replace(/^["']|["']$/g, ''));
+      const row = lines[i]
+        .split(',')
+        .map((val) => val.trim().replace(/^["']|["']$/g, ''));
       if (row.length < headers.length) continue;
 
       let dateStr = '';
@@ -58,7 +81,9 @@ export class ImportsService {
         dateStr = row[dateIdx];
         description = row[descIdx];
 
-        const withdrawal = row[withdrawalIdx] ? parseFloat(row[withdrawalIdx]) : 0;
+        const withdrawal = row[withdrawalIdx]
+          ? parseFloat(row[withdrawalIdx])
+          : 0;
         const deposit = row[depositIdx] ? parseFloat(row[depositIdx]) : 0;
 
         if (withdrawal > 0) {
@@ -87,15 +112,31 @@ export class ImportsService {
 
       // Basic categorization rule based on description keyword matches
       const descLower = description.toLowerCase();
-      if (descLower.includes('grocery') || descLower.includes('supermarket') || descLower.includes('walmart')) {
+      if (
+        descLower.includes('grocery') ||
+        descLower.includes('supermarket') ||
+        descLower.includes('walmart')
+      ) {
         category = 'Groceries';
-      } else if (descLower.includes('cibc savings') || descLower.includes('neo savings') || descLower.includes('transfer')) {
+      } else if (
+        descLower.includes('cibc savings') ||
+        descLower.includes('neo savings') ||
+        descLower.includes('transfer')
+      ) {
         category = 'Transfer';
-      } else if (descLower.includes('xeqt') || descLower.includes('wealthsimple') || descLower.includes('invest')) {
+      } else if (
+        descLower.includes('xeqt') ||
+        descLower.includes('wealthsimple') ||
+        descLower.includes('invest')
+      ) {
         category = 'Investment';
       } else if (descLower.includes('rent') || descLower.includes('landlord')) {
         category = 'Housing';
-      } else if (descLower.includes('starbucks') || descLower.includes('restaurant') || descLower.includes('uber')) {
+      } else if (
+        descLower.includes('starbucks') ||
+        descLower.includes('restaurant') ||
+        descLower.includes('uber')
+      ) {
         category = 'Dining Out';
       }
 
@@ -113,17 +154,22 @@ export class ImportsService {
     // Deduplication check: Query existing transactions in this account and flag potential duplicates
     // Rule: Duplicate if there's a transaction on the same date +/- 2 days with the exact same amount
     const existingTransactions = await this.prisma.transaction.findMany({
-      where: { accountId: data.accountId, userId }
+      where: { accountId: data.accountId, userId },
     });
 
     for (const parsed of parsedTransactions) {
       const parsedDate = new Date(parsed.date);
-      
-      const duplicate = existingTransactions.find((existing: any) => {
+
+      const duplicate = existingTransactions.find((existing) => {
         const existingDate = new Date(existing.date);
-        const dayDiff = Math.abs(existingDate.getTime() - parsedDate.getTime()) / (1000 * 60 * 60 * 24);
-        
-        return dayDiff <= 2 && Math.abs(Number(existing.amount) - parsed.amount) < 0.01;
+        const dayDiff =
+          Math.abs(existingDate.getTime() - parsedDate.getTime()) /
+          (1000 * 60 * 60 * 24);
+
+        return (
+          dayDiff <= 2 &&
+          Math.abs(Number(existing.amount) - parsed.amount) < 0.01
+        );
       });
 
       if (duplicate) {
@@ -135,7 +181,7 @@ export class ImportsService {
     this.pendingImports.set(importId, {
       userId,
       accountId: data.accountId,
-      transactions: parsedTransactions
+      transactions: parsedTransactions,
     });
 
     return {
@@ -147,16 +193,18 @@ export class ImportsService {
     };
   }
 
-  async getImportStatus(userId: string, importId: string) {
+  getImportStatus(userId: string, importId: string) {
     const pending = this.pendingImports.get(importId);
     if (!pending || pending.userId !== userId) {
-      throw new NotFoundException('Pending import session not found or already expired.');
+      throw new NotFoundException(
+        'Pending import session not found or already expired.',
+      );
     }
     return {
       importId,
       accountId: pending.accountId,
       totalCount: pending.transactions.length,
-      transactions: pending.transactions
+      transactions: pending.transactions,
     };
   }
 
@@ -164,12 +212,14 @@ export class ImportsService {
   async commitImport(userId: string, importId: string, correlationId?: string) {
     const pending = this.pendingImports.get(importId);
     if (!pending || pending.userId !== userId) {
-      throw new NotFoundException('Pending import session not found or already expired.');
+      throw new NotFoundException(
+        'Pending import session not found or already expired.',
+      );
     }
 
     return this.prisma.$transaction(async (tx) => {
       const account = await tx.account.findFirst({
-        where: { id: pending.accountId, userId }
+        where: { id: pending.accountId, userId },
       });
       if (!account) {
         throw new NotFoundException('Account not found');
@@ -192,10 +242,10 @@ export class ImportsService {
             category: t.category,
             merchant: t.merchant,
             description: t.description,
-            source: TransactionSource.csv
-          }
+            source: TransactionSource.csv,
+          },
         });
-        
+
         importedRecords.push(created);
         totalAmountAdded += t.amount;
       }
@@ -205,9 +255,9 @@ export class ImportsService {
         where: { id: pending.accountId },
         data: {
           currentBalance: {
-            increment: totalAmountAdded
-          }
-        }
+            increment: totalAmountAdded,
+          },
+        },
       });
 
       // Write Audit Log
@@ -217,9 +267,12 @@ export class ImportsService {
           entityType: 'import',
           entityId: importId,
           action: 'commit_csv',
-          afterJson: { count: importedRecords.length, accountId: pending.accountId } as any,
-          correlationId
-        }
+          afterJson: {
+            count: importedRecords.length,
+            accountId: pending.accountId,
+          },
+          correlationId,
+        },
       });
 
       // Clear from in-memory pending map
@@ -229,7 +282,7 @@ export class ImportsService {
         importId,
         importedCount: importedRecords.length,
         balanceChange: totalAmountAdded,
-        status: 'committed'
+        status: 'committed',
       };
     });
   }

@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -28,7 +32,9 @@ export class AuthService {
       throw new ConflictException('An account with this email already exists.');
     }
     if (!data.password || data.password.length < 8) {
-      throw new UnauthorizedException('Password must be at least 8 characters.');
+      throw new UnauthorizedException(
+        'Password must be at least 8 characters.',
+      );
     }
 
     const passwordHash = await bcrypt.hash(data.password, 12);
@@ -69,7 +75,8 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
     // Use the same generic error whether the user doesn't exist or the password is wrong,
     // to avoid leaking which emails are registered.
-    const invalidCredentials = () => new UnauthorizedException('Invalid email or password.');
+    const invalidCredentials = () =>
+      new UnauthorizedException('Invalid email or password.');
     if (!user) {
       throw invalidCredentials();
     }
@@ -81,7 +88,10 @@ export class AuthService {
       throw invalidCredentials();
     }
 
-    const passwordMatches = await bcrypt.compare(data.password, authAccount.password);
+    const passwordMatches = await bcrypt.compare(
+      data.password,
+      authAccount.password,
+    );
     if (!passwordMatches) {
       throw invalidCredentials();
     }
@@ -121,9 +131,13 @@ export class AuthService {
     if (!session || session.expiresAt.getTime() < Date.now()) {
       if (session) {
         // Clean up the expired session row.
-        await this.prisma.session.delete({ where: { id: session.id } }).catch(() => undefined);
+        await this.prisma.session
+          .delete({ where: { id: session.id } })
+          .catch(() => undefined);
       }
-      throw new UnauthorizedException('Session expired or invalid. Please log in again.');
+      throw new UnauthorizedException(
+        'Session expired or invalid. Please log in again.',
+      );
     }
     return session.user;
   }

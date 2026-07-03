@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Req, Headers, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService, RegisterDto, LoginDto } from './auth.service';
 
@@ -20,7 +27,9 @@ export class AuthController {
 
   @Post('logout')
   logout(@Headers('authorization') authorization?: string) {
-    const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : undefined;
+    const token = authorization?.startsWith('Bearer ')
+      ? authorization.slice(7)
+      : undefined;
     if (!token) {
       throw new UnauthorizedException('Missing session token.');
     }

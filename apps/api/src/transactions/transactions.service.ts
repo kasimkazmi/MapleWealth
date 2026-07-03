@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TransactionSource } from '@maplewealth/db';
+import type { Prisma } from '@maplewealth/db';
 
 export class CreateTransactionDto {
   accountId!: string;
@@ -25,13 +26,16 @@ export class UpdateTransactionDto {
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(userId: string, filters: {
-    accountId?: string;
-    from?: string;
-    to?: string;
-    category?: string;
-  }) {
-    const whereClause: any = { userId };
+  async findAll(
+    userId: string,
+    filters: {
+      accountId?: string;
+      from?: string;
+      to?: string;
+      category?: string;
+    },
+  ) {
+    const whereClause: Prisma.TransactionWhereInput = { userId };
 
     if (filters.accountId) {
       whereClause.accountId = filters.accountId;
@@ -53,8 +57,8 @@ export class TransactionsService {
       where: whereClause,
       include: {
         account: {
-          select: { name: true, institution: true }
-        }
+          select: { name: true, institution: true },
+        },
       },
       orderBy: { date: 'desc' },
     });
@@ -70,7 +74,11 @@ export class TransactionsService {
     return transaction;
   }
 
-  async create(userId: string, data: CreateTransactionDto, correlationId?: string) {
+  async create(
+    userId: string,
+    data: CreateTransactionDto,
+    correlationId?: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Get account
       const account = await tx.account.findFirst({
@@ -112,7 +120,7 @@ export class TransactionsService {
           entityType: 'transaction',
           entityId: transaction.id,
           action: 'create',
-          afterJson: transaction as any,
+          afterJson: transaction,
           correlationId,
         },
       });
@@ -121,7 +129,12 @@ export class TransactionsService {
     });
   }
 
-  async update(userId: string, id: string, data: UpdateTransactionDto, correlationId?: string) {
+  async update(
+    userId: string,
+    id: string,
+    data: UpdateTransactionDto,
+    correlationId?: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const oldTx = await tx.transaction.findFirst({
         where: { id, userId },
@@ -130,12 +143,13 @@ export class TransactionsService {
         throw new NotFoundException('Transaction not found');
       }
 
-      const updatedData: any = {};
+      const updatedData: Prisma.TransactionUpdateInput = {};
       if (data.date) updatedData.date = new Date(data.date);
       if (data.amount !== undefined) updatedData.amount = data.amount;
       if (data.category) updatedData.category = data.category;
       if (data.merchant !== undefined) updatedData.merchant = data.merchant;
-      if (data.description !== undefined) updatedData.description = data.description;
+      if (data.description !== undefined)
+        updatedData.description = data.description;
       if (data.source) updatedData.source = data.source;
 
       const newTx = await tx.transaction.update({
@@ -163,8 +177,8 @@ export class TransactionsService {
           entityType: 'transaction',
           entityId: id,
           action: 'update',
-          beforeJson: oldTx as any,
-          afterJson: newTx as any,
+          beforeJson: oldTx,
+          afterJson: newTx,
           correlationId,
         },
       });
@@ -203,7 +217,7 @@ export class TransactionsService {
           entityType: 'transaction',
           entityId: id,
           action: 'delete',
-          beforeJson: transaction as any,
+          beforeJson: transaction,
           correlationId,
         },
       });

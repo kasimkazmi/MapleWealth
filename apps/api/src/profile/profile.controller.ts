@@ -1,6 +1,7 @@
 import { Controller, Get, Patch, Body, UseInterceptors } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { User } from '@maplewealth/db';
 import { UserInterceptor } from '../common/interceptors/user.interceptor';
 
 class UpdateProfileDto {
@@ -20,12 +21,12 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get()
-  getProfile(@CurrentUser() user: any) {
+  getProfile(@CurrentUser() user: User) {
     return this.profileService.getProfile(user.id);
   }
 
   @Patch()
-  updateProfile(@CurrentUser() user: any, @Body() body: UpdateProfileDto) {
+  updateProfile(@CurrentUser() user: User, @Body() body: UpdateProfileDto) {
     return this.profileService.updateProfile(user.id, body);
   }
 }
