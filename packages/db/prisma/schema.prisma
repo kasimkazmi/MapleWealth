@@ -299,16 +299,18 @@ model RecurringRule {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @db.Uuid @map("user_id")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  entityType String   @map("entity_type")
-  entityId   String   @db.Uuid @map("entity_id")
-  action     String
-  beforeJson Json?    @map("before_json")
-  afterJson  Json?    @map("after_json")
-  createdAt  DateTime @default(now()) @db.Timestamptz @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entityType    String   @map("entity_type")
+  entityId      String   @db.Uuid @map("entity_id")
+  action        String
+  beforeJson    Json?    @map("before_json")
+  afterJson     Json?    @map("after_json")
+  correlationId String?  @map("correlation_id")
+  createdAt     DateTime @default(now()) @db.Timestamptz @map("created_at")
 
   @@index([userId])
+  @@index([correlationId])
   @@map("audit_logs")
 }

@@ -70,7 +70,7 @@ export class TransactionsService {
     return transaction;
   }
 
-  async create(userId: string, data: CreateTransactionDto) {
+  async create(userId: string, data: CreateTransactionDto, correlationId?: string) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Get account
       const account = await tx.account.findFirst({
@@ -113,6 +113,7 @@ export class TransactionsService {
           entityId: transaction.id,
           action: 'create',
           afterJson: transaction as any,
+          correlationId,
         },
       });
 
@@ -120,7 +121,7 @@ export class TransactionsService {
     });
   }
 
-  async update(userId: string, id: string, data: UpdateTransactionDto) {
+  async update(userId: string, id: string, data: UpdateTransactionDto, correlationId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const oldTx = await tx.transaction.findFirst({
         where: { id, userId },
@@ -164,6 +165,7 @@ export class TransactionsService {
           action: 'update',
           beforeJson: oldTx as any,
           afterJson: newTx as any,
+          correlationId,
         },
       });
 
@@ -171,7 +173,7 @@ export class TransactionsService {
     });
   }
 
-  async remove(userId: string, id: string) {
+  async remove(userId: string, id: string, correlationId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.findFirst({
         where: { id, userId },
@@ -202,6 +204,7 @@ export class TransactionsService {
           entityId: id,
           action: 'delete',
           beforeJson: transaction as any,
+          correlationId,
         },
       });
 

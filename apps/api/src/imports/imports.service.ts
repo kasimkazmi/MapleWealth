@@ -161,7 +161,7 @@ export class ImportsService {
   }
 
   // Commit transaction import to database, skipping flagged duplicates
-  async commitImport(userId: string, importId: string) {
+  async commitImport(userId: string, importId: string, correlationId?: string) {
     const pending = this.pendingImports.get(importId);
     if (!pending || pending.userId !== userId) {
       throw new NotFoundException('Pending import session not found or already expired.');
@@ -217,7 +217,8 @@ export class ImportsService {
           entityType: 'import',
           entityId: importId,
           action: 'commit_csv',
-          afterJson: { count: importedRecords.length, accountId: pending.accountId } as any
+          afterJson: { count: importedRecords.length, accountId: pending.accountId } as any,
+          correlationId
         }
       });
 
