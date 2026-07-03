@@ -1,7 +1,7 @@
 # 01. Product Vision
 
 
-Project: FinanceOS Canada, Personal Finance Dashboard
+Project: MapleWealth, Personal Finance Dashboard
 Owner: Master
 Version: 1.0
 Primary reference: Personal Financial Master Plan (Canada)
@@ -9,7 +9,7 @@ Core rule: Emergency Fund -> TFSA -> FHSA -> RRSP. Do not recommend trading, mar
 
 
 ## Vision
-Build FinanceOS Canada, a private-first personal finance dashboard that helps the owner grow from current early-stage wealth to $100,000+ net worth and eventually financial independence.
+Build MapleWealth, a private-first personal finance dashboard that helps the owner grow from current early-stage wealth to $100,000+ net worth and eventually financial independence.
 
 ## Problem
 Most finance apps are either generic, US-focused, bank-marketing products, or too shallow for serious long-term planning. This product should be Canadian, investment-aware, tax-account-aware, and goal-driven.

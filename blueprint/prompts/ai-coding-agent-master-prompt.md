@@ -1,9 +1,9 @@
 # AI Coding Agent Master Prompt
 
-You are building FinanceOS Canada, a production-quality personal finance dashboard.
+You are building MapleWealth, a production-quality personal finance dashboard.
 
 
-Project: FinanceOS Canada, Personal Finance Dashboard
+Project: MapleWealth, Personal Finance Dashboard
 Owner: Master
 Version: 1.0
 Primary reference: Personal Financial Master Plan (Canada)
@@ -20,24 +20,24 @@ Core rule: Emergency Fund -> TFSA -> FHSA -> RRSP. Do not recommend trading, mar
 - Do not recommend options, forex, meme stocks, or day trading.
 - Keep emergency fund and vacation fund separate from investing.
 
+## Tech Stack & Architecture
+- **Frontend UI:** Next.js (App Router, Tailwind CSS, shadcn/ui) in `apps/web`. Serves only client-side presentation, routing, and data visualization. Requests data from the backend API.
+- **Backend API:** NestJS (TypeScript, Prisma ORM, PostgreSQL) in `apps/api`. Handles all business logic, database mutations, CRA contribution math, projection logic, rules evaluations, and auth logic.
+- **Shared DB:** Prisma ORM package `@maplewealth/db` in `packages/db`.
+
 ## MVP Build Order
-1. Initialize monorepo.
-2. Create Next.js 15 app.
-3. Create NestJS API.
-4. Add Prisma/PostgreSQL.
-5. Add Better Auth.
-6. Implement accounts.
-7. Implement transactions.
-8. Implement goals.
-9. Implement net worth dashboard.
-10. Implement TFSA tracker.
-11. Implement dividends/DRIP tracker.
-12. Implement projection engine.
-13. Implement rules engine.
-14. Implement monthly report.
-15. Add CSV import.
-16. Add tests.
-17. Dockerize.
+1. Setup Monorepo workspaces (`apps/web`, `apps/api`, `packages/db`).
+2. Run PostgreSQL local instance and deploy Prisma schema from `packages/db`.
+3. Build the NestJS API (`apps/api`), implementing:
+   - Account and profile management.
+   - Core financial engine (Net Worth, Emergency & Vacation funds).
+   - Investment holdings, dividends, and DRIP tracker.
+   - Canadian tax contribution limits & penalty logic.
+   - Projection and rules calculation engine.
+   - CSV upload processing.
+4. Build Next.js UI (`apps/web`) to integrate with the NestJS API endpoints.
+5. Setup authentication endpoints and security boundaries.
+6. Containerize with Docker.
 
 ## First Screen Requirements
 The homepage after login must show:

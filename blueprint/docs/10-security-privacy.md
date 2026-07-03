@@ -1,7 +1,7 @@
 # 10. Security and Privacy
 
 
-Project: FinanceOS Canada, Personal Finance Dashboard
+Project: MapleWealth, Personal Finance Dashboard
 Owner: Master
 Version: 1.0
 Primary reference: Personal Financial Master Plan (Canada)

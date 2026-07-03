@@ -1,7 +1,7 @@
 # 14. Business Plan
 
 
-Project: FinanceOS Canada, Personal Finance Dashboard
+Project: MapleWealth, Personal Finance Dashboard
 Owner: Master
 Version: 1.0
 Primary reference: Personal Financial Master Plan (Canada)
@@ -9,7 +9,7 @@ Core rule: Emergency Fund -> TFSA -> FHSA -> RRSP. Do not recommend trading, mar
 
 
 ## Positioning
-FinanceOS Canada: a Canadian-first personal finance operating system for people who want serious planning, not flashy spending charts.
+MapleWealth: a Canadian-first personal finance operating system for people who want serious planning, not flashy spending charts.
 
 ## Differentiators
 - Canadian registered accounts first-class
