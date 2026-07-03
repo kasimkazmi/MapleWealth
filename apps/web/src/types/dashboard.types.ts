@@ -87,6 +87,7 @@ export interface ContributionRoom {
   year: number;
   tfsa: {
     limit: number;
+    carryForwardBase: number;
     contributed: number;
     roomRemaining: number;
     overLimit: boolean;
@@ -94,6 +95,7 @@ export interface ContributionRoom {
   };
   fhsa: {
     limit: number;
+    carryForwardBase: number;
     lifetimeLimit: number;
     contributedThisYear: number;
     lifetimeContributed: number;
@@ -103,6 +105,7 @@ export interface ContributionRoom {
   };
   rrsp: {
     calculatedLimit: number;
+    isEstimate: boolean;
     contributed: number;
     roomRemaining: number;
     overLimit: boolean;
@@ -122,7 +125,7 @@ export interface MonthlyReport {
   };
   warnings: RuleResult[];
   registeredAccountLimits: ContributionRoom;
-  aiInsights: string;
+  summary: string;
 }
 
 export interface TradeFormData {

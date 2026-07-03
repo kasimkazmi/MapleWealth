@@ -295,20 +295,20 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* AI Advisor report */}
+            {/* Automated financial summary (rules-based, not AI-generated) */}
             <div className="glass-panel p-8 border-emerald-500/10">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">AI Financial Advisor Insights</h3>
-                  <p className="text-xs text-slate-500">Compiled by MapleWealth deterministic summary generator.</p>
+                  <h3 className="text-lg font-bold text-white">Automated Financial Summary</h3>
+                  <p className="text-xs text-slate-500">Compiled by MapleWealth's deterministic rules engine from your account data.</p>
                 </div>
               </div>
 
               <div className="text-slate-300 space-y-4 text-sm leading-relaxed whitespace-pre-wrap font-sans bg-[#0c1122] p-6 rounded-xl border border-slate-850">
-                {report ? report.aiInsights : "No advisor insights generated yet."}
+                {report ? report.summary : "No summary generated yet."}
               </div>
             </div>
           </div>

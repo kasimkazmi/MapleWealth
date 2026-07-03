@@ -1,8 +1,12 @@
 import { PrismaClient, AccountType, AccountPurpose, GoalType, RecurringRuleType, Frequency, AssetType } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+// Seed-only default credentials — change this password after first login in any shared environment.
+const SEED_USER_PASSWORD = process.env.SEED_USER_PASSWORD || 'ChangeMe123!';
 
 async function main() {
   console.log('Seeding database...');
@@ -13,6 +17,8 @@ async function main() {
   const seedData = JSON.parse(seedRaw);
 
   // Clean DB
+  await prisma.session.deleteMany({});
+  await prisma.authAccount.deleteMany({});
   await prisma.auditLog.deleteMany({});
   await prisma.recurringRule.deleteMany({});
   await prisma.goal.deleteMany({});
@@ -32,6 +38,18 @@ async function main() {
       baseCurrency: 'CAD',
     },
   });
+
+  // Create login credentials for the seeded user so it can actually sign in.
+  const passwordHash = await bcrypt.hash(SEED_USER_PASSWORD, 12);
+  await prisma.authAccount.create({
+    data: {
+      userId: user.id,
+      accountId: user.id,
+      providerId: 'credentials',
+      password: passwordHash,
+    },
+  });
+  console.log(`Seeded login: master@maplewealth.ca / ${SEED_USER_PASSWORD} (change this password after first login)`);
 
   // Create financial profile
   await prisma.financialProfile.create({

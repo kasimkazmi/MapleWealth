@@ -14,8 +14,8 @@ export class ImportsController {
   }
 
   @Get(':id/status')
-  getImportStatus(@Param('id') id: string) {
-    return this.importsService.getImportStatus(id);
+  getImportStatus(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.importsService.getImportStatus(user.id, id);
   }
 
   @Post(':id/commit')

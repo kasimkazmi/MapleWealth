@@ -21,6 +21,9 @@ export class ProfileService {
     monthlyTakeHome?: number;
     monthlyExpenses?: number;
     targetNetWorth?: number;
+    tfsaCarryForwardBase?: number;
+    fhsaCarryForwardBase?: number;
+    rrspKnownRoom?: number;
   }) {
     const currentProfile = await this.prisma.financialProfile.findUnique({
       where: { userId },
@@ -47,6 +50,9 @@ export class ProfileService {
         monthlyExpenses: data.monthlyExpenses || 0,
         savingsCapacity: updateData.savingsCapacity || 0,
         targetNetWorth: data.targetNetWorth || 100000,
+        tfsaCarryForwardBase: data.tfsaCarryForwardBase || 0,
+        fhsaCarryForwardBase: data.fhsaCarryForwardBase || 0,
+        rrspKnownRoom: data.rrspKnownRoom || 0,
       },
       update: updateData,
     });

@@ -93,6 +93,43 @@ export class RulesService {
       });
     }
 
+    // Rule 2b/2c/2d: Enforce the full EF -> TFSA -> FHSA -> RRSP waterfall using real
+    // contribution-room figures, not just balance checks. Contributing to a later account
+    // in the sequence while an earlier one still has room is flagged as out of order.
+    const room = await this.contributionsService.getContributionRoom(userId);
+    const fhsaContributedThisYear = room.fhsa.contributedThisYear;
+    const rrspContributedThisYear = room.rrsp.contributed;
+
+    if (efBalance >= 5000 && room.tfsa.roomRemaining > 0 && fhsaContributedThisYear > 0) {
+      results.push({
+        status: 'warn',
+        severity: 'low',
+        message: `Contributing to FHSA ($${fhsaContributedThisYear.toFixed(2)} this year) while $${room.tfsa.roomRemaining.toFixed(2)} of TFSA room remains unused.`,
+        recommended_action: 'Per the Canadian Master Plan priority order, max out TFSA room before directing new savings to FHSA (unless actively saving for an imminent home purchase).',
+        source_rule: 'Priority Sequencing: TFSA -> FHSA'
+      });
+    }
+
+    if (efBalance >= 5000 && room.tfsa.roomRemaining > 0 && rrspContributedThisYear > 0) {
+      results.push({
+        status: 'warn',
+        severity: 'low',
+        message: `Contributing to RRSP ($${rrspContributedThisYear.toFixed(2)} this year) while $${room.tfsa.roomRemaining.toFixed(2)} of TFSA room remains unused.`,
+        recommended_action: 'Per the Canadian Master Plan priority order, max out TFSA room before directing new savings to RRSP.',
+        source_rule: 'Priority Sequencing: TFSA -> RRSP'
+      });
+    }
+
+    if (room.fhsa.roomRemaining > 0 && rrspContributedThisYear > 0) {
+      results.push({
+        status: 'warn',
+        severity: 'low',
+        message: `Contributing to RRSP ($${rrspContributedThisYear.toFixed(2)} this year) while $${room.fhsa.roomRemaining.toFixed(2)} of FHSA room remains unused.`,
+        recommended_action: 'Per the Canadian Master Plan priority order, max out FHSA room before directing new savings to RRSP.',
+        source_rule: 'Priority Sequencing: FHSA -> RRSP'
+      });
+    }
+
     // Rule 3: Approved holdings guidelines
     const allowedETFs = ['XEQT', 'VEQT', 'VGRO'];
     const speculativeHoldings = holdings.filter(
@@ -126,9 +163,7 @@ export class RulesService {
       });
     }
 
-    // Rule 5: CRA Contribution Room Checks
-    const room = await this.contributionsService.getContributionRoom(userId);
-    
+    // Rule 5: CRA Contribution Room Checks (reuses `room` fetched above for Rule 2b/2c/2d)
     if (room.tfsa.overLimit) {
       results.push({
         status: 'fail',

@@ -1,4 +1,4 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -8,20 +8,23 @@ export class UserInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
-    
-    // In dev mode/single-user MVP, automatically fetch the default seeded user
-    let user = await this.prisma.user.findFirst();
-    if (!user) {
-      // Fallback fallback if seed wasn't run
-      user = await this.prisma.user.create({
-        data: {
-          email: 'master@maplewealth.ca',
-          name: 'Master',
-        },
-      });
+
+    const authorization: string | undefined = request.headers?.authorization;
+    const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : undefined;
+    if (!token) {
+      throw new UnauthorizedException('Missing or invalid Authorization header.');
     }
-    
-    request.user = user;
+
+    const session = await this.prisma.session.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!session || session.expiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedException('Session expired or invalid. Please log in again.');
+    }
+
+    request.user = session.user;
     return next.handle();
   }
 }

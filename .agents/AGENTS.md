@@ -44,3 +44,34 @@
 - Maintainability: Prefer small, testable units and avoid deeply nested component logic.
 - Predictable state: Keep derived values in memoized selectors/helpers instead of duplicating state.
 - Safer effects: Keep effect dependencies explicit and avoid effect-driven chains that hide business flow.
+
+---
+
+# Backend Architecture Rules (MapleWealth)
+
+## Development & Structure Guidelines
+
+* **NestJS Module Separation:** Strictly isolate domains by feature modules (e.g., `ProfileModule`, `AccountsModule`, `TransactionsModule`, `InvestmentsModule`, `ContributionsModule`, `ProjectionsModule`, `RulesModule`, `ImportsModule`, `ReportsModule`, `UsersModule`).
+* **Controllers vs. Services:** Controllers must only handle routing, payload validation (DTOs), and returning clean HTTP responses. All calculations, database mutations, third-party calls, and business logic must reside within injectable NestJS Services.
+* **Database Access:** Database calls must be made via the global `PrismaService` from `@maplewealth/db`. Avoid raw database queries unless highly optimized indexing requires it.
+* **Transactional Integrity:** Any operation that alters account balances, records transactions, or updates contribution metrics must execute inside a database transaction block (`this.prisma.$transaction`) to prevent partial failures and keep states in sync.
+
+## Financial Calculations & Decimals
+
+* **No Floating-Point Math:** Never calculate or accumulate monetary values using Javascript floating-point numbers (`number`) in critical code paths.
+* **Decimal Library:** Use Prisma `Decimal` types or a robust library like `Decimal.js` to ensure rounding accuracy and prevent floating-point leaks.
+* **Currency Formatting:** Keep money fields matched with their corresponding currency codes (default `CAD`).
+
+## Security & Protection Guidelines
+
+* **DTO Payload Validation:** Validate incoming request payloads strictly by defining classes as DTO parameters.
+* **Global Rate Limiting:** Enforce API request limits globally utilizing throttler interceptors to block brute-force and scraping attacks.
+* **Cascading Purges:** GDPR/PIPEDA compliance deletion requests must clean up all user-associated records across profiles, transactions, and account details in a safe cascading database transaction.
+* **Audit Trail Logs:** Every creation, update, or deletion of financial records (e.g., transactions, manual contributions, account updates) must write a non-repudiable log entry to the `AuditLog` table containing before/after states.
+
+## Code Quality & Readability
+
+* **Strong Types:** Declare strict return types on all controller handlers and service methods. Avoid typing variables as `any`.
+* **Async/Await Safety:** Always use structured async/await patterns for promise resolutions. Wrap async blocks with try/catch to throw standard NestJS HttpExceptions (e.g. `NotFoundException`, `BadRequestException`) with descriptive error messages.
+* **Unused Code:** Strip unused NestJS decorators, providers, or mock handlers before committing backend source files.
+

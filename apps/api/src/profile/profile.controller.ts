@@ -9,6 +9,9 @@ class UpdateProfileDto {
   monthlyTakeHome?: number;
   monthlyExpenses?: number;
   targetNetWorth?: number;
+  tfsaCarryForwardBase?: number;
+  fhsaCarryForwardBase?: number;
+  rrspKnownRoom?: number;
 }
 
 @Controller('profile')

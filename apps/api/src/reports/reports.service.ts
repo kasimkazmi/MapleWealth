@@ -49,8 +49,9 @@ export class ReportsService {
     const warnings = await this.rulesService.evaluateRules(userId);
     const room = await this.contributionsService.getContributionRoom(userId);
 
-    // Compile dynamic AI Advice
-    const reportText = this.compileAiSummary({
+    // Compile the rules-based summary from real computed data (no LLM call — this is a
+    // deterministic template filled with the user's actual numbers, not generative AI).
+    const reportText = this.compileSummary({
       monthStr,
       income,
       expenses,
@@ -74,11 +75,11 @@ export class ReportsService {
       },
       warnings: warnings.filter(w => w.status !== 'pass'),
       registeredAccountLimits: room,
-      aiInsights: reportText
+      summary: reportText
     };
   }
 
-  private compileAiSummary(data: {
+  private compileSummary(data: {
     monthStr: string;
     income: number;
     expenses: number;
@@ -94,7 +95,7 @@ export class ReportsService {
 
     let review = `### Monthly Financial Review for ${data.monthStr}\n\n`;
 
-    review += `Hello Master, here is your personalized financial health summary based on your MapleWealth rules engine.\n\n`;
+    review += `Here is your financial health summary, generated from your MapleWealth account data and rules engine (this is a rules-based report, not AI-generated).\n\n`;
 
     review += `#### 📊 Financial Highlights\n`;
     review += `- **Net Worth:** $${data.netWorth.toLocaleString('en-CA', { minimumFractionDigits: 2 })}\n`;
@@ -118,18 +119,23 @@ export class ReportsService {
     }
 
     review += `#### 🍁 Registered Account Contributions\n`;
-    review += `- **TFSA:** You have **$${data.room.tfsa.roomRemaining.toLocaleString('en-CA')}** contribution room remaining this year. ${data.room.tfsa.overLimit ? '⚠️ Warning: Overcontribution penalty active!' : 'Ensure your $50/month auto-deposit is on track.'}\n`;
+    review += `- **TFSA:** You have **$${data.room.tfsa.roomRemaining.toLocaleString('en-CA')}** contribution room remaining this year. ${data.room.tfsa.overLimit ? '⚠️ Warning: Overcontribution penalty active!' : 'Room remaining based on your entered CRA carry-forward balance.'}\n`;
     review += `- **FHSA:** **$${data.room.fhsa.roomRemaining.toLocaleString('en-CA')}** remaining. (Keep HISA-based until home buying is active).\n`;
-    review += `- **RRSP:** Room remaining: **$${data.room.rrsp.roomRemaining.toLocaleString('en-CA')}**. ${data.profile && Number(data.profile.annualSalary) < 70000 ? 'ℹ️ Priority is low since salary is below $70k.' : 'Utilize for optimal tax deductions.'}\n\n`;
+    review += `- **RRSP:** Room remaining: **$${data.room.rrsp.roomRemaining.toLocaleString('en-CA')}**${data.room.rrsp.isEstimate ? ' (estimated — enter your CRA Notice of Assessment room for an exact figure)' : ''}. ${data.profile && Number(data.profile.annualSalary) < 70000 ? 'ℹ️ Priority is low since salary is below $70k.' : 'Utilize for optimal tax deductions.'}\n\n`;
 
-    review += `#### 🤖 AI Advisor Next Action Recommendation\n`;
+    const monthlySavingsCapacity = data.profile ? Number(data.profile.savingsCapacity) : 0;
+
+    review += `#### 🎯 Next Action Recommendation\n`;
     if (hasCriticalWarning) {
       review += `1. **Priority 1:** Focus entirely on your cash safety net. Build emergency savings to $5,000 before proceeding with investments.\n`;
     } else if (overcontributed) {
       review += `1. **Priority 1:** Correct registered account overcontributions immediately to stop 1%/month penalties.\n`;
+    } else if (data.room.tfsa.roomRemaining > 0) {
+      review += `1. **Priority 1:** Direct available monthly savings capacity of $${monthlySavingsCapacity.toLocaleString('en-CA')} toward your remaining TFSA room ($${data.room.tfsa.roomRemaining.toLocaleString('en-CA')}) before FHSA or RRSP.\n`;
+    } else if (data.room.fhsa.roomRemaining > 0) {
+      review += `1. **Priority 1:** TFSA room is fully used — direct savings capacity of $${monthlySavingsCapacity.toLocaleString('en-CA')} toward remaining FHSA room ($${data.room.fhsa.roomRemaining.toLocaleString('en-CA')}).\n`;
     } else {
-      review += `1. **Priority 1:** Continue the Wealthsimple TFSA recurring $50/month contribution into **XEQT**.\n`;
-      review += `2. **Priority 2:** Direct remaining monthly savings capacity of $1,300 to increase your emergency fund HISA balance toward the $8,000 ideal target.\n`;
+      review += `1. **Priority 1:** TFSA and FHSA room are fully used — direct savings capacity of $${monthlySavingsCapacity.toLocaleString('en-CA')} toward RRSP or non-registered investments.\n`;
     }
 
     return review;

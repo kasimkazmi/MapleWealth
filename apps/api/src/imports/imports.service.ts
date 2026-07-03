@@ -13,6 +13,7 @@ export class ImportCsvDto {
 export class ImportsService {
   // In-memory cache for pending imports
   private pendingImports = new Map<string, {
+    userId: string;
     accountId: string;
     transactions: any[];
   }>();
@@ -132,6 +133,7 @@ export class ImportsService {
 
     const importId = randomUUID();
     this.pendingImports.set(importId, {
+      userId,
       accountId: data.accountId,
       transactions: parsedTransactions
     });
@@ -145,9 +147,9 @@ export class ImportsService {
     };
   }
 
-  async getImportStatus(importId: string) {
+  async getImportStatus(userId: string, importId: string) {
     const pending = this.pendingImports.get(importId);
-    if (!pending) {
+    if (!pending || pending.userId !== userId) {
       throw new NotFoundException('Pending import session not found or already expired.');
     }
     return {
@@ -161,7 +163,7 @@ export class ImportsService {
   // Commit transaction import to database, skipping flagged duplicates
   async commitImport(userId: string, importId: string) {
     const pending = this.pendingImports.get(importId);
-    if (!pending) {
+    if (!pending || pending.userId !== userId) {
       throw new NotFoundException('Pending import session not found or already expired.');
     }
 

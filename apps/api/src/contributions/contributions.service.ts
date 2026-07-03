@@ -85,34 +85,46 @@ export class ContributionsService {
       .reduce((sum, c) => sum + Number(c.amount), 0);
 
     // 2. Setup TFSA calculations
+    // Carry-forward base is manually entered by the user from CRA My Account, since CRA is the
+    // only authoritative source for unused prior-year room and there is no public API for it.
+    // It represents unused room accumulated as of Jan 1 of the current year.
     const tfsaLimit = 7000;
-    // For MVP, assume a clean baseline room (or read from profile configuration, if we add carry forwards later).
-    // Let's assume the user starts with the annual limit.
-    const tfsaUnusedCarryForward = 0; // MVP baseline
-    const tfsaRoom = tfsaLimit + tfsaUnusedCarryForward - tfsaContributed;
+    const tfsaCarryForwardBase = profile ? Number(profile.tfsaCarryForwardBase) : 0;
+    const tfsaRoom = tfsaLimit + tfsaCarryForwardBase - tfsaContributed;
 
     // 3. Setup FHSA calculations
+    // CRA allows only a single year of FHSA carry-forward, capped at $8,000, so
+    // fhsaCarryForwardBase should never exceed 8000 when the user enters it.
     const fhsaLimit = 8000;
     const fhsaLifetimeLimit = 40000;
+    const fhsaCarryForwardBase = profile ? Math.min(Number(profile.fhsaCarryForwardBase), fhsaLimit) : 0;
     const pastFhsas = await this.prisma.contribution.findMany({
       where: { userId, registeredAccountType: 'fhsa' }
     });
     const fhsaLifetimeContributed = pastFhsas.reduce((sum, c) => sum + Number(c.amount), 0);
 
-    const fhsaRoomLeft = Math.max(0, fhsaLimit - fhsaContributed);
+    const fhsaRoomLeft = Math.max(0, fhsaLimit + fhsaCarryForwardBase - fhsaContributed);
     const fhsaLifetimeRoomLeft = Math.max(0, fhsaLifetimeLimit - fhsaLifetimeContributed);
 
     // 4. Setup RRSP calculations
-    // RRSP room is based on 18% of prior year salary, maxing out at CRA cap ($32,490 for 2025, $33,830 for 2026)
+    // rrspKnownRoom is the deduction limit from the user's latest CRA Notice of Assessment
+    // (as of Jan 1 of the current year), which already bakes in all prior-year carry-forward.
+    // If the user hasn't entered it yet, fall back to an estimate: 18% of current salary,
+    // capped at the CRA dollar max ($32,490 for 2025, $33,830 for 2026). This estimate omits
+    // carry-forward and uses current- rather than prior-year salary, so it understates real room.
+    const rrspKnownRoom = profile ? Number(profile.rrspKnownRoom) : 0;
     const priorSalary = profile ? Number(profile.annualSalary) : 0;
     const rrspCappedLimit = currentYear === 2026 ? 33830 : 32490;
-    const rrspBaseLimit = Math.min(priorSalary * 0.18, rrspCappedLimit);
+    const rrspEstimatedLimit = Math.min(priorSalary * 0.18, rrspCappedLimit);
+    const rrspIsEstimate = rrspKnownRoom <= 0;
+    const rrspBaseLimit = rrspIsEstimate ? rrspEstimatedLimit : rrspKnownRoom;
     const rrspRoom = Math.max(0, rrspBaseLimit - rrspContributed);
 
     return {
       year: currentYear,
       tfsa: {
         limit: tfsaLimit,
+        carryForwardBase: tfsaCarryForwardBase,
         contributed: tfsaContributed,
         roomRemaining: tfsaRoom,
         overLimit: tfsaRoom < 0,
@@ -120,15 +132,17 @@ export class ContributionsService {
       },
       fhsa: {
         limit: fhsaLimit,
+        carryForwardBase: fhsaCarryForwardBase,
         lifetimeLimit: fhsaLifetimeLimit,
         contributedThisYear: fhsaContributed,
         lifetimeContributed: fhsaLifetimeContributed,
         roomRemaining: Math.min(fhsaRoomLeft, fhsaLifetimeRoomLeft),
-        overLimit: fhsaContributed > fhsaLimit || fhsaLifetimeContributed > fhsaLifetimeLimit,
-        estimatedPenalty: (fhsaContributed > fhsaLimit ? (fhsaContributed - fhsaLimit) * 0.01 : 0)
+        overLimit: fhsaContributed > fhsaLimit + fhsaCarryForwardBase || fhsaLifetimeContributed > fhsaLifetimeLimit,
+        estimatedPenalty: (fhsaContributed > fhsaLimit + fhsaCarryForwardBase ? (fhsaContributed - fhsaLimit - fhsaCarryForwardBase) * 0.01 : 0)
       },
       rrsp: {
         calculatedLimit: rrspBaseLimit,
+        isEstimate: rrspIsEstimate,
         contributed: rrspContributed,
         roomRemaining: rrspRoom,
         // RRSP allows a $2,000 lifetime overcontribution buffer before penalties kick in
