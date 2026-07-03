@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FinancialProfile, Account, Goal, Holding, RuleResult, ContributionRoom, MonthlyReport, TradeFormData } from '../types/dashboard.types';
+import { apiFetch, SessionExpiredError } from '../lib/api';
 
 export function useDashboard() {
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,6 @@ export function useDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const API_URL = "http://localhost:3001/api";
 
       const [
         profileRes,
@@ -46,15 +46,15 @@ export function useDashboard() {
         roomRes,
         reportRes,
       ] = await Promise.all([
-        fetch(`${API_URL}/profile`),
-        fetch(`${API_URL}/accounts/net-worth`),
-        fetch(`${API_URL}/accounts`),
-        fetch(`${API_URL}/goals`),
-        fetch(`${API_URL}/investments/holdings`),
-        fetch(`${API_URL}/investments/performance`),
-        fetch(`${API_URL}/rules/evaluate`),
-        fetch(`${API_URL}/registered-accounts/room`),
-        fetch(`${API_URL}/reports/monthly`),
+        apiFetch(`/profile`),
+        apiFetch(`/accounts/net-worth`),
+        apiFetch(`/accounts`),
+        apiFetch(`/goals`),
+        apiFetch(`/investments/holdings`),
+        apiFetch(`/investments/performance`),
+        apiFetch(`/rules/evaluate`),
+        apiFetch(`/registered-accounts/room`),
+        apiFetch(`/reports/monthly`),
       ]);
 
       if (!profileRes.ok || !netWorthRes.ok || !accountsRes.ok || !goalsRes.ok) {
@@ -84,7 +84,7 @@ export function useDashboard() {
   const handleRecordTrade = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:3001/api/investments/trades", {
+      const res = await apiFetch("/investments/trades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tradeForm),

@@ -49,6 +49,18 @@ export class AuthService {
       },
     });
 
+    // Seed an empty financial profile so the dashboard has something to load
+    // immediately after signup instead of 404ing on a missing profile.
+    await this.prisma.financialProfile.create({
+      data: {
+        userId: user.id,
+        annualSalary: 0,
+        monthlyTakeHome: 0,
+        monthlyExpenses: 0,
+        savingsCapacity: 0,
+      },
+    });
+
     return { id: user.id, email: user.email, name: user.name };
   }
 

@@ -2,18 +2,20 @@
 
 import { useDashboard } from "../hooks/useDashboard";
 import { Card } from "../components/Card";
-import { 
-  LayoutDashboard, 
-  Wallet, 
-  LineChart, 
-  ShieldCheck, 
-  Sparkles, 
-  Bell, 
-  CheckCircle2, 
-  AlertTriangle, 
+import { logout } from "../lib/api";
+import {
+  LayoutDashboard,
+  Wallet,
+  LineChart,
+  ShieldCheck,
+  Sparkles,
+  Bell,
+  CheckCircle2,
+  AlertTriangle,
   X,
   Compass,
-  ArrowUpRight
+  ArrowUpRight,
+  LogOut
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -148,6 +150,14 @@ export default function Dashboard() {
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-all shadow-lg shadow-emerald-600/15 cursor-pointer"
             >
               Record Buy/Sell Trade
+            </button>
+            <button
+              onClick={() => logout()}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-semibold transition-all flex items-center gap-2 cursor-pointer"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
             </button>
           </div>
         </header>
