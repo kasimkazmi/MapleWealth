@@ -1,3 +1,5 @@
+<!-- AI Entry Point: Always read .agent/AI_CONTEXT.md first to understand the project architecture, boundaries, and conventions without reading the entire codebase. -->
+
 # MapleWealth, Production-Ready SaaS Blueprint
 
 
