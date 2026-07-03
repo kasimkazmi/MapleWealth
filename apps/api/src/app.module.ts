@@ -13,9 +13,17 @@ import { ProjectionsModule } from './projections/projections.module';
 import { RulesModule } from './rules/rules.module';
 import { ImportsModule } from './imports/imports.module';
 import { ReportsModule } from './reports/reports.module';
+import { UsersModule } from './users/users.module';
+
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 60,
+    }]),
     PrismaModule,
     ProfileModule,
     AccountsModule,
@@ -28,8 +36,15 @@ import { ReportsModule } from './reports/reports.module';
     RulesModule,
     ImportsModule,
     ReportsModule,
+    UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

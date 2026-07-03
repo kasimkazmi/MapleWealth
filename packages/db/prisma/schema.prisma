@@ -68,6 +68,8 @@ model User {
   id               String             @id @default(uuid()) @db.Uuid
   email            String             @unique
   name             String?
+  emailVerified    Boolean            @default(false) @map("email_verified")
+  image            String?
   country          String             @default("Canada")
   baseCurrency     String             @default("CAD")
   createdAt        DateTime           @default(now()) @db.Timestamptz
@@ -81,8 +83,68 @@ model User {
   goals            Goal[]
   recurringRules   RecurringRule[]
   auditLogs        AuditLog[]
+  sessions         Session[]
+  authAccounts     AuthAccount[]
+  subscription     Subscription?
 
   @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  @@map("sessions")
+}
+
+model AuthAccount {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @db.Uuid @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  password              String?
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  idToken               String?   @map("id_token")
+  createdAt             DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt             DateTime  @updatedAt @db.Timestamptz @map("updated_at")
+
+  @@map("auth_accounts")
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt  DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  @@map("verifications")
+}
+
+model Subscription {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @db.Uuid @map("user_id")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           String   // e.g. active, trialing, canceled, past_due
+  planId           String   @map("plan_id") // e.g. free, premium, business
+  currentPeriodEnd DateTime @map("current_period_end")
+  createdAt        DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt        DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  @@map("subscriptions")
 }
 
 model FinancialProfile {
