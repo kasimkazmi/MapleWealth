@@ -28,7 +28,7 @@ export default function SignupPage() {
     }
 
     // Registration doesn't return a session, so log in immediately after.
-    const loginResult = await request(`${API_URL}/auth/login`, {
+    const loginResult = await request<{ token: string }>(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

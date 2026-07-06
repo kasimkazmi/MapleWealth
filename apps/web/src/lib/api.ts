@@ -22,10 +22,35 @@ export class SessionExpiredError extends Error {
   }
 }
 
+export interface ApiSuccess<T = Record<string, unknown>> {
+  ok: true;
+  data: T;
+}
+
+export interface ApiFailure {
+  ok: false;
+  message: string;
+}
+
+function extractMessage(data: unknown, status: number): string {
+  if (data && typeof data === "object" && "message" in data) {
+    const message = (data as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+    if (Array.isArray(message)) return message.join(", ");
+  }
+  if (status === 401) return "Invalid email or password.";
+  if (status === 409) return "An account with this email already exists.";
+  if (status >= 500) return "The server hit an unexpected error. Please try again shortly.";
+  return "Something went wrong. Please try again.";
+}
+
 // Performs a fetch and returns a friendly error message on failure — never throws
 // a raw JSON-parse error, HTML body, or network exception straight at the UI.
 // On success, returns the parsed JSON body.
-export async function request(url: string, init: RequestInit = {}): Promise<{ ok: true; data: any } | { ok: false; message: string }> {
+export async function request<T = Record<string, unknown>>(
+  url: string,
+  init: RequestInit = {},
+): Promise<ApiSuccess<T> | ApiFailure> {
   let res: Response;
   try {
     res = await fetch(url, init);
@@ -44,7 +69,7 @@ export async function request(url: string, init: RequestInit = {}): Promise<{ ok
     return { ok: false, message: `Unexpected response from the server (status ${res.status}).` };
   }
 
-  let data: any;
+  let data: unknown;
   try {
     data = await res.json();
   } catch {
@@ -52,21 +77,10 @@ export async function request(url: string, init: RequestInit = {}): Promise<{ ok
   }
 
   if (!res.ok) {
-    const message = typeof data?.message === "string"
-      ? data.message
-      : Array.isArray(data?.message)
-        ? data.message.join(", ")
-        : res.status === 401
-          ? "Invalid email or password."
-          : res.status === 409
-            ? "An account with this email already exists."
-            : res.status >= 500
-              ? "The server hit an unexpected error. Please try again shortly."
-              : "Something went wrong. Please try again.";
-    return { ok: false, message };
+    return { ok: false, message: extractMessage(data, res.status) };
   }
 
-  return { ok: true, data };
+  return { ok: true, data: data as T };
 }
 
 // Wraps fetch to attach the session token and redirect to /login on 401.

@@ -14,7 +14,7 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
 
-    const result = await request(`${API_URL}/auth/login`, {
+    const result = await request<{ token: string }>(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
