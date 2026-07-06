@@ -31,63 +31,66 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#060913] px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="glass-panel w-full max-w-sm p-8 space-y-5"
-      >
-        <div className="text-center mb-2">
-          <h1 className="text-2xl font-bold text-white">MapleWealth</h1>
-          <p className="text-slate-400 text-sm mt-1">Sign in to your financial command center.</p>
-        </div>
-
-        {error && (
-          <div className="text-rose-400 text-sm bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
-            {error}
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm text-slate-400 mb-1">Email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-[#0c1122] border border-slate-800 text-white focus:outline-none focus:border-emerald-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm text-slate-400 mb-1">Password</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-[#0c1122] border border-slate-800 text-white focus:outline-none focus:border-emerald-500"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-lg font-semibold transition-all cursor-pointer"
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="relative w-full max-w-sm">
+        <div className="hd-decoration-tack" />
+        <form
+          onSubmit={handleSubmit}
+          className="hd-card relative w-full p-8 space-y-5 rotate-[-1deg]"
+          style={{ boxShadow: "8px 8px 0px 0px var(--border)" }}
         >
-          {submitting ? "Signing in..." : "Sign In"}
-        </button>
+          <div className="text-center mb-2">
+            <h1 className="hd-wavy-underline text-4xl">MapleWealth</h1>
+            <p className="text-lg mt-2">Sign in to your money notebook.</p>
+          </div>
 
-        <p className="text-xs text-slate-500 text-center">
-          Signing in here will sign you out of any other active session on this account.
-        </p>
+          {error && (
+            <div
+              className="text-base px-3 py-2 rotate-[0.5deg]"
+              style={{ background: "#fff9c4", border: "2px dashed var(--border)", borderRadius: "var(--radius-wobbly-sm)" }}
+            >
+              {error}
+            </div>
+          )}
 
-        <p className="text-xs text-slate-500 text-center">
-          No account yet?{" "}
-          <a href="/signup" className="text-emerald-400 hover:underline">
-            Create one
-          </a>
-        </p>
-      </form>
+          <div>
+            <label className="block text-lg mb-1">Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="hd-input px-3 py-2 text-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-lg mb-1">Password</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="hd-input px-3 py-2 text-lg"
+            />
+          </div>
+
+          <button type="submit" disabled={submitting} className="hd-btn w-full py-3 text-xl">
+            {submitting ? "Signing in..." : "Sign In!"}
+          </button>
+
+          <p className="text-sm text-center" style={{ opacity: 0.7 }}>
+            Signing in here will sign you out of any other active session on this account.
+          </p>
+
+          <p className="text-sm text-center">
+            No account yet?{" "}
+            <a href="/signup" className="underline" style={{ color: "var(--accent-2)" }}>
+              Create one
+            </a>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

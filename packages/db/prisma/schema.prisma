@@ -86,6 +86,7 @@ model User {
   sessions         Session[]
   authAccounts     AuthAccount[]
   subscription     Subscription?
+  approvedHoldings ApprovedHolding[]
 
   @@map("users")
 }
@@ -279,6 +280,18 @@ model Goal {
 
   @@index([userId])
   @@map("goals")
+}
+
+model ApprovedHolding {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  createdAt DateTime @default(now()) @db.Timestamptz @map("created_at")
+
+  @@unique([userId, symbol])
+  @@index([userId])
+  @@map("approved_holdings")
 }
 
 model RecurringRule {

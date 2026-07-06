@@ -2,6 +2,8 @@
 
 import { useDashboard } from "../hooks/useDashboard";
 import { Card } from "../components/Card";
+import { NetWorthTab } from "../components/NetWorthTab";
+import { InvestmentsTab } from "../components/InvestmentsTab";
 import { logout } from "../lib/api";
 import {
   LayoutDashboard,
@@ -42,10 +44,13 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060913] text-emerald-400 font-medium">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-emerald-500 animate-pulse text-lg">Loading MapleWealth Personal OS...</p>
+          <div
+            className="w-16 h-16 mx-auto mb-4 animate-spin"
+            style={{ border: "4px solid var(--border)", borderTopColor: "transparent", borderRadius: "50%" }}
+          ></div>
+          <p className="text-xl">Loading MapleWealth Personal OS...</p>
         </div>
       </div>
     );
@@ -53,17 +58,17 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060913] text-rose-400 p-6">
-        <div className="max-w-md w-full glass-panel p-8 text-center border-rose-500/20">
-          <div className="w-16 h-16 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">Backend Connection Failed</h2>
-          <p className="text-slate-400 mb-6 text-sm">{error}</p>
-          <button 
-            onClick={fetchData} 
-            className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors font-medium cursor-pointer"
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="hd-card max-w-md w-full p-8 text-center">
+          <div
+            className="w-16 h-16 mx-auto mb-4 flex items-center justify-center"
+            style={{ background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "50%" }}
           >
+            <AlertTriangle className="w-8 h-8" style={{ color: "var(--accent)" }} />
+          </div>
+          <h2 className="text-2xl mb-2">Backend Connection Failed</h2>
+          <p className="mb-6 text-sm" style={{ opacity: 0.7 }}>{error}</p>
+          <button onClick={fetchData} className="hd-btn w-full py-2">
             Retry Connection
           </button>
         </div>
@@ -73,89 +78,97 @@ export default function Dashboard() {
 
   const netWorthGoal = goals.find((g) => g.type === "net_worth");
   const efMinGoal = goals.find((g) => g.name.includes("Minimum"));
+  const efIdealGoal = goals.find((g) => g.type === "emergency_fund" && g !== efMinGoal);
 
-  const progressNetWorth = netWorthGoal
-    ? Math.min(100, (netWorth.netWorth / Number(netWorthGoal.targetAmount)) * 100)
+  const netWorthTarget = netWorthGoal ? Number(netWorthGoal.targetAmount) : null;
+  const progressNetWorth = netWorthTarget
+    ? Math.min(100, (netWorth.netWorth / netWorthTarget) * 100)
     : 0;
 
   const efTarget = efMinGoal ? Number(efMinGoal.targetAmount) : 5000;
+  const efIdealTarget = efIdealGoal ? Number(efIdealGoal.targetAmount) : 8000;
   const efProgress = goals.find(g => g.type === "emergency_fund")?.currentAmount || 0;
   const progressEf = Math.min(100, (efProgress / efTarget) * 100);
 
   return (
-    <div className="min-h-screen flex bg-[#060913]">
+    <div className="min-h-screen flex">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800 bg-[#0a0f21] p-6 flex flex-col justify-between hidden md:flex">
+      <aside
+        className="w-64 p-6 flex-col justify-between hidden md:flex"
+        style={{ borderRight: "3px solid var(--border)", background: "var(--card)" }}
+      >
         <div>
           <div className="flex items-center gap-3 mb-8">
-            <Compass className="w-8 h-8 text-emerald-500 animate-spin-slow" />
-            <span className="text-xl font-bold tracking-tight text-white">
-              Maple<span className="text-emerald-500">Wealth</span>
+            <Compass className="w-8 h-8" style={{ color: "var(--accent-2)" }} />
+            <span className="text-2xl hd-wavy-underline">
+              MapleWealth
             </span>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-2">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === "dashboard"
-                  ? "bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500"
-                  : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer ${
+                activeTab === "dashboard" ? "hover:rotate-0" : "hover:-rotate-1"
               }`}
+              style={
+                activeTab === "dashboard"
+                  ? { background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-sm)" }
+                  : { opacity: 0.65 }
+              }
             >
               <LayoutDashboard className="w-4 h-4" /> Dashboard
             </button>
             <button
               onClick={() => setActiveTab("accounts")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === "accounts"
-                  ? "bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500"
-                  : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer ${
+                activeTab === "accounts" ? "hover:rotate-0" : "hover:-rotate-1"
               }`}
+              style={
+                activeTab === "accounts"
+                  ? { background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-sm)" }
+                  : { opacity: 0.65 }
+              }
             >
               <Wallet className="w-4 h-4" /> Net Worth
             </button>
             <button
               onClick={() => setActiveTab("investments")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === "investments"
-                  ? "bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500"
-                  : "text-slate-400 hover:bg-slate-800/40 hover:text-white"
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer ${
+                activeTab === "investments" ? "hover:rotate-0" : "hover:-rotate-1"
               }`}
+              style={
+                activeTab === "investments"
+                  ? { background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-sm)" }
+                  : { opacity: 0.65 }
+              }
             >
               <LineChart className="w-4 h-4" /> Investments
             </button>
           </nav>
         </div>
 
-        <div className="glass-panel p-4 border-slate-800/60">
-          <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">User Profile</div>
-          <div className="font-semibold text-white">{profile?.userId ? "Master" : "Guest User"}</div>
-          <div className="text-xs text-emerald-500 font-medium">Software Developer</div>
-          <div className="text-xs text-slate-400 mt-1">Salary: ${profile?.annualSalary ? Number(profile.annualSalary).toLocaleString() : "0"} CAD</div>
+        <div className="hd-card hd-card--tight p-4 rotate-1">
+          <div className="text-xs uppercase tracking-wider font-bold mb-2" style={{ opacity: 0.55 }}>User Profile</div>
+          <div className="font-bold text-lg">{profile?.userId ? "Master" : "Guest User"}</div>
+          <div className="text-sm font-bold" style={{ color: "var(--accent-2)" }}>Software Developer</div>
+          <div className="text-sm mt-1" style={{ opacity: 0.65 }}>Salary: ${profile?.annualSalary ? Number(profile.annualSalary).toLocaleString() : "0"} CAD</div>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
         {/* Top Header */}
-        <header className="flex justify-between items-center border-b border-slate-800/60 pb-6">
+        <header className="flex justify-between items-center hd-divider-dashed pb-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">Financial Command Center</h1>
-            <p className="text-slate-400 text-sm mt-1">Canadian personal wealth optimization plan tracking.</p>
+            <h1 className="text-4xl">Financial Command Center</h1>
+            <p className="text-sm mt-1" style={{ opacity: 0.65 }}>Canadian personal wealth optimization plan tracking.</p>
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={() => setShowTradeModal(true)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-all shadow-lg shadow-emerald-600/15 cursor-pointer"
-            >
+            <button onClick={() => setShowTradeModal(true)} className="hd-btn px-4 py-2">
               Record Buy/Sell Trade
             </button>
-            <button
-              onClick={() => logout()}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-semibold transition-all flex items-center gap-2 cursor-pointer"
-              title="Sign out"
-            >
+            <button onClick={() => logout()} className="hd-btn hd-btn--secondary px-4 py-2" title="Sign out">
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
@@ -167,62 +180,65 @@ export default function Dashboard() {
             {/* Reusable Cards Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Net Worth Card */}
-              <Card title="Net Worth" icon={<Wallet className="w-5 h-5 text-blue-400" />}>
-                <div className="text-4xl font-extrabold text-white">
+              <Card title="Net Worth" icon={<Wallet className="w-5 h-5" style={{ color: "var(--accent-2)" }} />} decoration="tack" rotate="-rotate-1">
+                <div className="text-4xl font-bold">
                   ${netWorth.netWorth.toLocaleString("en-CA", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="text-xs text-slate-400 mt-2 flex justify-between">
+                <div className="text-xs mt-2 flex justify-between" style={{ opacity: 0.6 }}>
                   <span>Assets: ${netWorth.assets.toLocaleString()}</span>
                   <span>Liabilities: ${netWorth.debt.toLocaleString()}</span>
                 </div>
                 <div className="mt-6">
-                  <div className="flex justify-between text-xs font-medium mb-1">
-                    <span className="text-emerald-400">Progress to $100k Target</span>
-                    <span className="text-white">{progressNetWorth.toFixed(1)}%</span>
+                  <div className="flex justify-between text-xs font-bold mb-1">
+                    <span style={{ color: "var(--accent-2)" }}>
+                      {netWorthTarget
+                        ? `Progress to $${netWorthTarget.toLocaleString("en-CA")} Target`
+                        : "Set a Net Worth goal in the Net Worth tab"}
+                    </span>
+                    <span>{progressNetWorth.toFixed(1)}%</span>
                   </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-gradient-to-r from-emerald-500 to-blue-500 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${progressNetWorth}%` }}
+                  <div className="w-full h-3 overflow-hidden" style={{ border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-pill)", background: "var(--muted)" }}>
+                    <div
+                      className="h-full transition-all duration-500"
+                      style={{ width: `${progressNetWorth}%`, background: "var(--accent-2)" }}
                     ></div>
                   </div>
                 </div>
               </Card>
 
               {/* Emergency Buffer Card */}
-              <Card title="Emergency Buffer" icon={<ShieldCheck className="w-5 h-5 text-rose-400" />} className="border-rose-500/15">
-                <div className="text-4xl font-extrabold text-white">
+              <Card title="Emergency Buffer" icon={<ShieldCheck className="w-5 h-5" style={{ color: "var(--accent)" }} />} decoration="tape" rotate="rotate-1">
+                <div className="text-4xl font-bold">
                   ${efProgress.toLocaleString("en-CA", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="text-xs text-rose-400 font-medium mt-2">
-                  Min Target: $5,000 | Ideal: $8,000
+                <div className="text-xs font-bold mt-2" style={{ color: "var(--accent)" }}>
+                  Min Target: ${efTarget.toLocaleString("en-CA")} | Ideal: ${efIdealTarget.toLocaleString("en-CA")}
                 </div>
                 <div className="mt-6">
-                  <div className="flex justify-between text-xs font-medium mb-1">
-                    <span className="text-rose-400">Buffer Strength</span>
-                    <span className="text-white">{progressEf.toFixed(0)}%</span>
+                  <div className="flex justify-between text-xs font-bold mb-1">
+                    <span style={{ color: "var(--accent)" }}>Buffer Strength</span>
+                    <span>{progressEf.toFixed(0)}%</span>
                   </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-rose-500 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${progressEf}%` }}
+                  <div className="w-full h-3 overflow-hidden" style={{ border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-pill)", background: "var(--muted)" }}>
+                    <div
+                      className="h-full transition-all duration-500"
+                      style={{ width: `${progressEf}%`, background: "var(--accent)" }}
                     ></div>
                   </div>
                 </div>
               </Card>
 
               {/* TFSA Status Card */}
-              <Card title="TFSA Room Remaining" icon={<LineChart className="w-5 h-5 text-emerald-400" />} className="border-blue-500/15">
-                <div className="text-4xl font-extrabold text-white">
+              <Card title="TFSA Room Remaining" icon={<LineChart className="w-5 h-5" style={{ color: "var(--accent-2)" }} />} rotate="-rotate-1">
+                <div className="text-4xl font-bold">
                   ${room ? room.tfsa.roomRemaining.toLocaleString("en-CA", { minimumFractionDigits: 2 }) : "0.00"}
                 </div>
-                <div className="text-xs text-blue-400 font-medium mt-2 flex justify-between">
-                  <span>Yearly limit: $7,000</span>
-                  <span>Auto-Deposit: $50/mo</span>
+                <div className="text-xs font-bold mt-2" style={{ color: "var(--accent-2)" }}>
+                  <span>Yearly limit: ${room ? room.tfsa.limit.toLocaleString("en-CA") : "0"}</span>
                 </div>
-                <div className="mt-6 flex items-center justify-between text-xs border-t border-slate-800/60 pt-3">
-                  <span className="text-slate-400">Total invested this year</span>
-                  <span className="text-blue-400 font-bold">${room ? room.tfsa.contributed.toLocaleString() : "0"}</span>
+                <div className="mt-6 flex items-center justify-between text-xs hd-divider-dashed pt-3">
+                  <span style={{ opacity: 0.65 }}>Total invested this year</span>
+                  <span className="font-bold" style={{ color: "var(--accent-2)" }}>${room ? room.tfsa.contributed.toLocaleString() : "0"}</span>
                 </div>
               </Card>
             </div>
@@ -230,30 +246,34 @@ export default function Dashboard() {
             {/* Warnings and Holdings */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Warnings and Cautions Feed */}
-              <div className="glass-panel p-6">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-amber-500" /> Planning Engine Guidance & Warnings
+              <div className="hd-card p-6">
+                <h3 className="text-2xl mb-4 flex items-center gap-2">
+                  <Bell className="w-5 h-5" style={{ color: "var(--accent)" }} /> Planning Engine Guidance &amp; Warnings
                 </h3>
                 <div className="space-y-4">
                   {rules.filter(r => r.status !== 'pass').length === 0 ? (
-                    <div className="p-4 bg-emerald-500/5 text-emerald-400 text-sm rounded-lg border border-emerald-500/10 flex items-center gap-2">
+                    <div
+                      className="p-4 text-sm flex items-center gap-2"
+                      style={{ background: "#e8f3e3", border: "2px dashed var(--border)", borderRadius: "var(--radius-wobbly-sm)" }}
+                    >
                       <CheckCircle2 className="w-4 h-4" /> All checks passed! Your assets fully follow the Canadian Master Plan strategy.
                     </div>
                   ) : (
                     rules.filter(r => r.status !== 'pass').map((rule, idx) => (
-                      <div 
-                        key={idx} 
-                        className={`p-4 rounded-lg border text-sm flex gap-3 ${
-                          rule.severity === 'high' 
-                            ? 'bg-rose-500/5 border-rose-500/20 text-rose-300' 
-                            : 'bg-amber-500/5 border-amber-500/20 text-amber-300'
-                        }`}
+                      <div
+                        key={idx}
+                        className="p-4 text-sm flex gap-3"
+                        style={{
+                          border: "2px solid var(--border)",
+                          borderRadius: "var(--radius-wobbly-sm)",
+                          background: rule.severity === 'high' ? "#fdeaea" : "var(--postit)",
+                        }}
                       >
-                        <AlertTriangle className="w-5 h-5 shrink-0" />
+                        <AlertTriangle className="w-5 h-5 shrink-0" style={{ color: rule.severity === 'high' ? "var(--accent)" : "#a68b00" }} />
                         <div>
-                          <div className="font-bold text-white mb-0.5">{rule.source_rule}</div>
-                          <p className="mb-2 text-slate-300 text-xs">{rule.message}</p>
-                          <div className="text-xs italic bg-[#060913]/60 p-2.5 rounded-lg border border-slate-800/40">
+                          <div className="font-bold mb-0.5">{rule.source_rule}</div>
+                          <p className="mb-2 text-xs" style={{ opacity: 0.75 }}>{rule.message}</p>
+                          <div className="text-xs italic p-2.5" style={{ border: "2px dashed var(--border)", borderRadius: "var(--radius-wobbly-sm)", background: "var(--card)" }}>
                             Action: {rule.recommended_action}
                           </div>
                         </div>
@@ -264,16 +284,16 @@ export default function Dashboard() {
               </div>
 
               {/* Holdings Section */}
-              <div className="glass-panel p-6">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
-                  <span className="flex items-center gap-2"><ArrowUpRight className="w-5 h-5 text-emerald-400" /> Asset Holdings</span>
-                  <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full font-bold">XEQT Focused</span>
+              <div className="hd-card p-6">
+                <h3 className="text-2xl mb-4 flex items-center justify-between">
+                  <span className="flex items-center gap-2"><ArrowUpRight className="w-5 h-5" style={{ color: "var(--accent-2)" }} /> Asset Holdings</span>
+                  <span className="hd-badge text-xs font-bold">Investment Policy</span>
                 </h3>
-                
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead>
-                      <tr className="text-slate-500 border-b border-slate-800">
+                      <tr className="hd-divider-dashed">
                         <th className="pb-3">Symbol</th>
                         <th className="pb-3">Shares</th>
                         <th className="pb-3">Avg Cost</th>
@@ -284,16 +304,16 @@ export default function Dashboard() {
                     <tbody>
                       {holdings.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="py-4 text-center text-slate-500">No active holdings recorded.</td>
+                          <td colSpan={5} className="py-4 text-center" style={{ opacity: 0.55 }}>No active holdings recorded.</td>
                         </tr>
                       ) : (
                         holdings.map((h, idx) => (
-                          <tr key={idx} className="border-b border-slate-800/40 text-slate-300 hover:text-white">
-                            <td className="py-3 font-semibold text-white">{h.symbol}</td>
+                          <tr key={idx} className="hd-divider-dashed">
+                            <td className="py-3 font-bold">{h.symbol}</td>
                             <td className="py-3">{Number(h.quantity).toFixed(2)}</td>
                             <td className="py-3">${Number(h.averageCost).toFixed(2)}</td>
                             <td className="py-3">${Number(h.currentPrice).toFixed(2)}</td>
-                            <td className="py-3 text-right font-bold text-emerald-400">
+                            <td className="py-3 text-right font-bold" style={{ color: "var(--accent-2)" }}>
                               ${(Number(h.quantity) * Number(h.currentPrice)).toLocaleString("en-CA", { minimumFractionDigits: 2 })}
                             </td>
                           </tr>
@@ -306,46 +326,55 @@ export default function Dashboard() {
             </div>
 
             {/* Automated financial summary (rules-based, not AI-generated) */}
-            <div className="glass-panel p-8 border-emerald-500/10">
+            <div className="hd-card p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-5 h-5" />
+                <div
+                  className="w-10 h-10 flex items-center justify-center"
+                  style={{ background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "50%" }}
+                >
+                  <Sparkles className="w-5 h-5" style={{ color: "var(--accent-2)" }} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Automated Financial Summary</h3>
-                  <p className="text-xs text-slate-500">Compiled by MapleWealth&apos;s deterministic rules engine from your account data.</p>
+                  <h3 className="text-2xl">Automated Financial Summary</h3>
+                  <p className="text-xs" style={{ opacity: 0.55 }}>Compiled by MapleWealth&apos;s deterministic rules engine from your account data.</p>
                 </div>
               </div>
 
-              <div className="text-slate-300 space-y-4 text-sm leading-relaxed whitespace-pre-wrap font-sans bg-[#0c1122] p-6 rounded-xl border border-slate-850">
+              <div
+                className="space-y-4 text-sm leading-relaxed whitespace-pre-wrap p-6"
+                style={{ border: "2px dashed var(--border)", borderRadius: "var(--radius-wobbly-sm)" }}
+              >
                 {report ? report.summary : "No summary generated yet."}
               </div>
             </div>
           </div>
         )}
 
+        {activeTab === "accounts" && (
+          <NetWorthTab profile={profile} goals={goals} onRefetch={fetchData} />
+        )}
+
+        {activeTab === "investments" && <InvestmentsTab />}
+
         {/* Trade Record Modal */}
         {showTradeModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="glass-panel w-full max-w-md p-6 bg-[#0a0f21] border-slate-800 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="hd-card w-full max-w-md p-6 rotate-1" style={{ boxShadow: "8px 8px 0px 0px var(--border)" }}>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-white">Record Buy/Sell Trade</h3>
-                <button 
-                  onClick={() => setShowTradeModal(false)}
-                  className="text-slate-500 hover:text-white cursor-pointer"
-                >
+                <h3 className="text-2xl">Record Buy/Sell Trade</h3>
+                <button onClick={() => setShowTradeModal(false)} className="cursor-pointer hover:opacity-60">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <form onSubmit={handleRecordTrade} className="space-y-4 text-sm">
                 <div>
-                  <label className="block text-slate-400 font-semibold mb-1">Target Account</label>
+                  <label className="block font-bold mb-1">Target Account</label>
                   <select
                     required
                     value={tradeForm.accountId}
                     onChange={(e) => setTradeForm({ ...tradeForm, accountId: e.target.value })}
-                    className="w-full bg-[#11162d] border border-slate-800 text-white p-2.5 rounded-lg focus:border-emerald-500 outline-none"
+                    className="hd-input p-2.5"
                   >
                     <option value="">Select account...</option>
                     {accounts.map((a) => (
@@ -356,21 +385,21 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Symbol</label>
+                    <label className="block font-bold mb-1">Symbol</label>
                     <input
                       type="text"
                       required
                       value={tradeForm.symbol}
                       onChange={(e) => setTradeForm({ ...tradeForm, symbol: e.target.value.toUpperCase() })}
-                      className="w-full bg-[#11162d] border border-slate-800 text-white p-2.5 rounded-lg focus:border-emerald-500 outline-none"
+                      className="hd-input p-2.5"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Trade Type</label>
+                    <label className="block font-bold mb-1">Trade Type</label>
                     <select
                       value={tradeForm.tradeType}
                       onChange={(e) => setTradeForm({ ...tradeForm, tradeType: e.target.value })}
-                      className="w-full bg-[#11162d] border border-slate-800 text-white p-2.5 rounded-lg focus:border-emerald-500 outline-none"
+                      className="hd-input p-2.5"
                     >
                       <option value="BUY">BUY</option>
                       <option value="SELL">SELL</option>
@@ -380,33 +409,30 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Shares Count</label>
+                    <label className="block font-bold mb-1">Shares Count</label>
                     <input
                       type="number"
                       step="any"
                       required
                       value={tradeForm.quantity}
                       onChange={(e) => setTradeForm({ ...tradeForm, quantity: parseFloat(e.target.value) })}
-                      className="w-full bg-[#11162d] border border-slate-800 text-white p-2.5 rounded-lg focus:border-emerald-500 outline-none"
+                      className="hd-input p-2.5"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Price per Share</label>
+                    <label className="block font-bold mb-1">Price per Share</label>
                     <input
                       type="number"
                       step="0.01"
                       required
                       value={tradeForm.price}
                       onChange={(e) => setTradeForm({ ...tradeForm, price: parseFloat(e.target.value) })}
-                      className="w-full bg-[#11162d] border border-slate-800 text-white p-2.5 rounded-lg focus:border-emerald-500 outline-none"
+                      className="hd-input p-2.5"
                     />
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all mt-4 cursor-pointer"
-                >
+                <button type="submit" className="hd-btn w-full py-2.5 mt-4">
                   Record and Update Portfolio
                 </button>
               </form>

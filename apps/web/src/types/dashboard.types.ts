@@ -34,6 +34,22 @@ export interface FinancialProfile {
   monthlyExpenses: string;
   savingsCapacity: string;
   targetNetWorth: string;
+  tfsaCarryForwardBase: string;
+  fhsaCarryForwardBase: string;
+  rrspKnownRoom: string;
+}
+
+// Mirrors the UpdateProfileDto accepted by PATCH /profile — all fields optional,
+// submitted as numbers (the backend stores them as Decimal).
+export interface ProfileUpdatePayload {
+  age?: number;
+  annualSalary?: number;
+  monthlyTakeHome?: number;
+  monthlyExpenses?: number;
+  targetNetWorth?: number;
+  tfsaCarryForwardBase?: number;
+  fhsaCarryForwardBase?: number;
+  rrspKnownRoom?: number;
 }
 
 export interface Account {
@@ -134,6 +150,16 @@ export interface MonthlyReport {
   warnings: RuleResult[];
   registeredAccountLimits: ContributionRoom;
   summary: string;
+}
+
+// Mirrors CreateGoalDto/UpdateGoalDto accepted by POST /goals and PATCH /goals/:id.
+export interface GoalPayload {
+  name?: string;
+  type?: GoalType;
+  targetAmount?: number;
+  currentAmount?: number;
+  targetDate?: string;
+  priority?: number;
 }
 
 export interface TradeFormData {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ContributionsService } from '../contributions/contributions.service';
+import { DEFAULT_APPROVED_HOLDINGS } from '../investment-policy/investment-policy.service';
 
 export interface RuleResult {
   status: 'pass' | 'warn' | 'fail';
@@ -9,6 +10,14 @@ export interface RuleResult {
   recommended_action: string;
   source_rule: string;
 }
+
+// The absolute floor below which an emergency fund is a critical risk, regardless of
+// what the user has configured as their own minimum/ideal targets. Not user-editable.
+const EF_CRITICAL_FLOOR = 1000;
+// Fallback EF targets used only when the user hasn't created their own
+// "Emergency Fund - Minimum" / "... - Ideal" Goal rows yet.
+const DEFAULT_EF_MINIMUM = 5000;
+const DEFAULT_EF_IDEAL = 8000;
 
 @Injectable()
 export class RulesService {
@@ -30,8 +39,35 @@ export class RulesService {
     const holdings = await this.prisma.holding.findMany({
       where: { userId },
     });
+    const efGoals = await this.prisma.goal.findMany({
+      where: { userId, type: 'emergency_fund' },
+    });
+    const approvedHoldingRows = await this.prisma.approvedHolding.findMany({
+      where: { userId },
+    });
 
     const income = profile ? Number(profile.annualSalary) : 0;
+
+    // Resolve the user's own EF minimum/ideal targets from their Goal rows (matching
+    // the "Minimum" / "Ideal" naming convention the frontend already uses), falling back
+    // to sensible defaults so users who haven't set goals yet see unchanged behavior.
+    const efMinGoal = efGoals.find((g) =>
+      g.name.toLowerCase().includes('minimum'),
+    );
+    const efIdealGoal = efGoals.find((g) => g !== efMinGoal);
+    const efMinTarget = efMinGoal
+      ? Number(efMinGoal.targetAmount)
+      : DEFAULT_EF_MINIMUM;
+    const efIdealTarget = efIdealGoal
+      ? Number(efIdealGoal.targetAmount)
+      : DEFAULT_EF_IDEAL;
+
+    // Resolve the user's own approved-holdings policy, falling back to the built-in
+    // default list when they haven't configured one yet.
+    const allowedETFs =
+      approvedHoldingRows.length > 0
+        ? approvedHoldingRows.map((r) => r.symbol.toUpperCase())
+        : DEFAULT_APPROVED_HOLDINGS;
 
     // 2. Sum EF balance
     const efBalance = accounts
@@ -49,31 +85,28 @@ export class RulesService {
       .reduce((sum, a) => sum + Number(a.currentBalance), 0);
 
     // Rule 1: Emergency Fund Critical Check
-    if (efBalance < 1000) {
+    if (efBalance < EF_CRITICAL_FLOOR) {
       results.push({
         status: 'fail',
         severity: 'high',
         message: `Emergency fund balance is critically low ($${efBalance.toFixed(2)}).`,
-        recommended_action:
-          'Stop all investing immediately and allocate 100% of savings capacity to build a $5,000 minimum emergency buffer in HISA.',
+        recommended_action: `Stop all investing immediately and allocate 100% of savings capacity to build a $${efMinTarget.toLocaleString('en-CA')} minimum emergency buffer in HISA.`,
         source_rule: 'Emergency Fund Minimum Target',
       });
-    } else if (efBalance < 5000) {
+    } else if (efBalance < efMinTarget) {
       results.push({
         status: 'warn',
         severity: 'medium',
-        message: `Emergency fund ($${efBalance.toFixed(2)}) is below the recommended minimum buffer of $5,000.`,
-        recommended_action:
-          'Allocate priority savings to the CIBC Savings HISA until it reaches at least $5,000.',
+        message: `Emergency fund ($${efBalance.toFixed(2)}) is below your minimum buffer target of $${efMinTarget.toLocaleString('en-CA')}.`,
+        recommended_action: `Allocate priority savings to your emergency fund account until it reaches at least $${efMinTarget.toLocaleString('en-CA')}.`,
         source_rule: 'Emergency Fund Minimum Target',
       });
-    } else if (efBalance < 8000) {
+    } else if (efBalance < efIdealTarget) {
       results.push({
         status: 'pass',
         severity: 'info',
-        message: `Emergency fund ($${efBalance.toFixed(2)}) is secure but below the ideal target of $8,000.`,
-        recommended_action:
-          'Optionally top up emergency fund to $8,000 for complete peace of mind.',
+        message: `Emergency fund ($${efBalance.toFixed(2)}) is secure but below your ideal target of $${efIdealTarget.toLocaleString('en-CA')}.`,
+        recommended_action: `Optionally top up emergency fund to $${efIdealTarget.toLocaleString('en-CA')} for complete peace of mind.`,
         source_rule: 'Emergency Fund Ideal Target',
       });
     } else {
@@ -88,13 +121,12 @@ export class RulesService {
     }
 
     // Rule 2: Investment prioritization before EF complete
-    if (efBalance < 5000 && investmentBalance > 10) {
+    if (efBalance < efMinTarget && investmentBalance > 10) {
       results.push({
         status: 'warn',
         severity: 'medium',
         message: 'Investing assets before securing the minimum emergency fund.',
-        recommended_action:
-          'Securing $5,000 cash must precede any long-term index ETF investments.',
+        recommended_action: `Securing $${efMinTarget.toLocaleString('en-CA')} cash must precede any long-term index ETF investments.`,
         source_rule: 'Priority Sequencing: EF -> TFSA',
       });
     }
@@ -107,7 +139,7 @@ export class RulesService {
     const rrspContributedThisYear = room.rrsp.contributed;
 
     if (
-      efBalance >= 5000 &&
+      efBalance >= efMinTarget &&
       room.tfsa.roomRemaining > 0 &&
       fhsaContributedThisYear > 0
     ) {
@@ -122,7 +154,7 @@ export class RulesService {
     }
 
     if (
-      efBalance >= 5000 &&
+      efBalance >= efMinTarget &&
       room.tfsa.roomRemaining > 0 &&
       rrspContributedThisYear > 0
     ) {
@@ -147,8 +179,8 @@ export class RulesService {
       });
     }
 
-    // Rule 3: Approved holdings guidelines
-    const allowedETFs = ['XEQT', 'VEQT', 'VGRO'];
+    // Rule 3: Approved holdings guidelines (allowedETFs resolved above from the
+    // user's own investment policy, falling back to the built-in default list)
     const speculativeHoldings = holdings.filter(
       (h) => !allowedETFs.includes(h.symbol.toUpperCase()),
     );
@@ -159,8 +191,7 @@ export class RulesService {
         status: 'warn',
         severity: 'medium',
         message: `Speculative or non-approved asset holdings found: ${list}.`,
-        recommended_action:
-          'MapleWealth advises focusing strictly on low-cost, broad-market index ETFs (XEQT, VEQT, VGRO). Avoid individual stocks or options.',
+        recommended_action: `MapleWealth advises focusing strictly on your approved investment policy (${allowedETFs.join(', ')}). Avoid individual stocks or options outside this list.`,
         source_rule: 'Asset Class Guidelines',
       });
     }

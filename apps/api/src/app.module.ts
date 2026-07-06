@@ -15,6 +15,7 @@ import { ImportsModule } from './imports/imports.module';
 import { ReportsModule } from './reports/reports.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { InvestmentPolicyModule } from './investment-policy/investment-policy.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -42,6 +43,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
     ReportsModule,
     UsersModule,
     AuthModule,
+    InvestmentPolicyModule,
   ],
   controllers: [AppController],
   providers: [

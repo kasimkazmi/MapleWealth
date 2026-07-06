@@ -2,69 +2,193 @@
 
 @layer base {
   :root {
-    --background: #060913;
-    --foreground: #f8fafc;
-    --card: rgba(13, 20, 38, 0.65);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --primary: #10b981;
-    --secondary: #3b82f6;
-    --accent: #f43f5e;
-    --muted: #64748b;
+    --background: #fdfbf7;
+    --foreground: #2d2d2d;
+    --card: #ffffff;
+    --muted: #e5e0d8;
+    --accent: #ff4d4d;
+    --accent-2: #2d5da1;
+    --postit: #fff9c4;
+    --border: #2d2d2d;
+
+    --radius-wobbly-sm: 225px 15px 220px 15px / 15px 220px 15px 225px;
+    --radius-wobbly-md: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    --radius-wobbly-lg: 30px 255px 15px 225px / 225px 15px 255px 30px;
+    --radius-wobbly-pill: 999px 40px 999px 40px / 40px 999px 40px 999px;
   }
 }
 
 body {
   background-color: var(--background);
+  background-image: radial-gradient(var(--muted) 1px, transparent 1px);
+  background-size: 24px 24px;
   color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-patrick), "Patrick Hand", sans-serif;
   overflow-x: hidden;
 }
 
-/* Glassmorphism custom styling utilities */
-.glass-panel {
+h1, h2, h3, h4, .font-hand-heading {
+  font-family: var(--font-kalam), "Kalam", cursive;
+}
+
+/* ---- Hand-drawn primitives ---- */
+
+.hd-card {
   background: var(--card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 3px solid var(--border);
+  border-radius: var(--radius-wobbly-md);
+  box-shadow: 6px 6px 0px 0px var(--border);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.glass-panel:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-  transform: translateY(-2px);
+.hd-card--tight {
+  box-shadow: 3px 3px 0px 0px rgba(45, 45, 45, 0.15);
 }
 
-/* Gradients text */
-.text-gradient-primary {
-  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.hd-card--postit {
+  background: var(--postit);
 }
 
-.text-gradient-accent {
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.hd-decoration-tape {
+  position: absolute;
+  top: -0.65rem;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 4.5rem;
+  height: 1.4rem;
+  background: rgba(180, 180, 180, 0.55);
+  border: 1px solid rgba(45, 45, 45, 0.15);
+  z-index: 10;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+.hd-decoration-tack {
+  position: absolute;
+  top: -0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1px solid var(--border);
+  box-shadow: 1px 1px 0px 0px var(--border);
+  z-index: 10;
+}
+
+.hd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  color: var(--foreground);
+  border: 3px solid var(--border);
+  border-radius: var(--radius-wobbly-pill);
+  box-shadow: 4px 4px 0px 0px var(--border);
+  font-family: var(--font-patrick), "Patrick Hand", sans-serif;
+  font-weight: 400;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease, color 0.1s ease;
+  cursor: pointer;
+}
+
+.hd-btn:hover {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 2px 2px 0px 0px var(--border);
+  transform: translate(2px, 2px);
+}
+
+.hd-btn:active {
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
+
+.hd-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 4px 4px 0px 0px var(--border);
+  background: #ffffff;
+  color: var(--foreground);
+}
+
+.hd-btn--secondary {
+  background: var(--muted);
+}
+
+.hd-btn--secondary:hover {
+  background: var(--accent-2);
+  color: #ffffff;
+}
+
+.hd-input {
+  width: 100%;
+  background: #ffffff;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-wobbly-sm);
+  font-family: var(--font-patrick), "Patrick Hand", sans-serif;
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hd-input::placeholder {
+  color: rgba(45, 45, 45, 0.4);
+}
+
+.hd-input:focus {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(45, 93, 161, 0.2);
+}
+
+.hd-wavy-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.hd-wavy-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.2rem;
   height: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='8' viewBox='0 0 100 8'%3E%3Cpath d='M0 4 Q 10 0, 20 4 T 40 4 T 60 4 T 80 4 T 100 4' stroke='%23ff4d4d' fill='none' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 50px 8px;
+}
+
+.hd-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-wobbly-pill);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.hd-divider-dashed {
+  border-top: 2px dashed var(--border);
+  opacity: 0.6;
+}
+
+/* Custom scrollbar to match paper theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #060913;
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
+  background: var(--muted);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-wobbly-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--accent);
 }

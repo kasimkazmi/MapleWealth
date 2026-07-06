@@ -21,6 +21,7 @@ async function main() {
   await prisma.authAccount.deleteMany({});
   await prisma.auditLog.deleteMany({});
   await prisma.recurringRule.deleteMany({});
+  await prisma.approvedHolding.deleteMany({});
   await prisma.goal.deleteMany({});
   await prisma.dividend.deleteMany({});
   await prisma.holding.deleteMany({});
@@ -127,6 +128,16 @@ async function main() {
       });
       console.log(`Created Holding: ${holding.symbol}`);
     }
+  }
+
+  // Seed the default approved-holdings policy so the demo account keeps its
+  // existing behavior (rules.service.ts falls back to a built-in default list
+  // only when a user has zero ApprovedHolding rows).
+  for (const symbol of ['XEQT', 'VEQT', 'VGRO']) {
+    await prisma.approvedHolding.create({
+      data: { userId: user.id, symbol },
+    });
+    console.log(`Created Approved Holding: ${symbol}`);
   }
 
   // Create recurring rules
