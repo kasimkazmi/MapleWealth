@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { FinancialProfile, Account, Goal, Holding, RuleResult, ContributionRoom, MonthlyReport, TradeFormData } from '../types/dashboard.types';
-import { apiFetch, SessionExpiredError } from '../lib/api';
+import { useState, useEffect, useCallback } from 'react';
+import { FinancialProfile, Account, Goal, Holding, PerformanceMetrics, RuleResult, ContributionRoom, MonthlyReport, TradeFormData } from '../types/dashboard.types';
+import { apiFetch } from '../lib/api';
 
 export function useDashboard() {
   const [loading, setLoading] = useState(true);
@@ -11,7 +11,7 @@ export function useDashboard() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
-  const [performance, setPerformance] = useState<any>(null);
+  const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
   const [rules, setRules] = useState<RuleResult[]>([]);
   const [room, setRoom] = useState<ContributionRoom | null>(null);
   const [report, setReport] = useState<MonthlyReport | null>(null);
@@ -30,7 +30,7 @@ export function useDashboard() {
 
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,16 +70,19 @@ export function useDashboard() {
       setRules(await rulesRes.json());
       setRoom(await roomRes.json());
       setReport(await reportRes.json());
-    } catch (err: any) {
-      setError(err.message || "Failed to load financial data.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load financial data.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Standard fetch-on-mount: fetchData sets loading/error state before its first
+    // await, which this rule flags even for the canonical React data-fetching pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchData();
+  }, [fetchData]);
 
   const handleRecordTrade = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,9 +99,9 @@ export function useDashboard() {
       }
 
       setShowTradeModal(false);
-      fetchData();
-    } catch (err: any) {
-      alert(err.message);
+      void fetchData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to record trade");
     }
   };
 

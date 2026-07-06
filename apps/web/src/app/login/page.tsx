@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL, setToken } from "../../lib/api";
+import { API_URL, setToken, request } from "../../lib/api";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,23 +13,21 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    try {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed.");
-      }
-      setToken(data.token);
-      window.location.href = "/";
-    } catch (err: any) {
-      setError(err.message || "Login failed.");
-    } finally {
+
+    const result = await request(`${API_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!result.ok) {
+      setError(result.message);
       setSubmitting(false);
+      return;
     }
+
+    setToken(result.data.token);
+    window.location.href = "/";
   };
 
   return (

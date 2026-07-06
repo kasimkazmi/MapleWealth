@@ -313,7 +313,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">Automated Financial Summary</h3>
-                  <p className="text-xs text-slate-500">Compiled by MapleWealth's deterministic rules engine from your account data.</p>
+                  <p className="text-xs text-slate-500">Compiled by MapleWealth&apos;s deterministic rules engine from your account data.</p>
                 </div>
               </div>
 

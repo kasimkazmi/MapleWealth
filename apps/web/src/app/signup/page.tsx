@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL, setToken } from "../../lib/api";
+import { API_URL, setToken, request } from "../../lib/api";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -14,35 +14,34 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    try {
-      const registerRes = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-      const registerData = await registerRes.json();
-      if (!registerRes.ok) {
-        throw new Error(registerData.message || "Sign up failed.");
-      }
 
-      // Registration doesn't return a session, so log in immediately after.
-      const loginRes = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const loginData = await loginRes.json();
-      if (!loginRes.ok) {
-        throw new Error(loginData.message || "Account created, but automatic sign-in failed. Please sign in manually.");
-      }
+    const registerResult = await request(`${API_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
 
-      setToken(loginData.token);
-      window.location.href = "/";
-    } catch (err: any) {
-      setError(err.message || "Sign up failed.");
-    } finally {
+    if (!registerResult.ok) {
+      setError(registerResult.message);
       setSubmitting(false);
+      return;
     }
+
+    // Registration doesn't return a session, so log in immediately after.
+    const loginResult = await request(`${API_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!loginResult.ok) {
+      setError(`Account created, but automatic sign-in failed: ${loginResult.message} Please sign in manually.`);
+      setSubmitting(false);
+      return;
+    }
+
+    setToken(loginResult.data.token);
+    window.location.href = "/";
   };
 
   return (

@@ -113,6 +113,14 @@ export interface ContributionRoom {
   };
 }
 
+export interface PerformanceMetrics {
+  totalCost: number;
+  totalValue: number;
+  totalGain: number;
+  gainPercentage: number;
+  holdingsCount: number;
+}
+
 export interface MonthlyReport {
   month: string;
   generatedAt: string;

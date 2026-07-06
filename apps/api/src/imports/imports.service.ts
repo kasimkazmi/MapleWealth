@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TransactionSource } from '@maplewealth/db';
-import type { Prisma } from '@maplewealth/db';
 import { randomUUID } from 'crypto';
 
 export class ImportCsvDto {
