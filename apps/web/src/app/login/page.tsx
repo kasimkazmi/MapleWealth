@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL, setToken, request } from "../../lib/api";
+import { authClient } from "../../lib/auth-client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,19 +14,14 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
 
-    const result = await request<{ token: string }>(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    const { error: signInError } = await authClient.signIn.email({ email, password });
 
-    if (!result.ok) {
-      setError(result.message);
+    if (signInError) {
+      setError(signInError.message || "Invalid email or password.");
       setSubmitting(false);
       return;
     }
 
-    setToken(result.data.token);
     window.location.href = "/";
   };
 

@@ -17,15 +17,12 @@ This is the persistent memory of MapleWealth for AI coding agents. Read this fil
 
 | Thing | Value |
 |---|---|
-| API port | `3000` (NestJS, `apps/api`, override with `PORT` env var) |
-| Web port | `3000` default Next.js dev port (`apps/web`, run separately from API — do not run both on 3000 simultaneously without changing one) |
+| App port | `3000` — single full-stack Next.js app (`apps/web`), API routes live under `apps/web/src/app/api/**` on the same origin. `apps/api` (NestJS) has been removed — its endpoints were ported verbatim into Next.js route handlers. |
 | Postgres | `localhost:5435` → container `5432`, db `maplewealth`, via `docker-compose.yml` |
 | Install | `npm install` at repo root (npm workspaces monorepo) |
-| Run all dev | `npm run dev` (root) — runs `dev` in every workspace that has it |
-| Run API only | `npm run start:dev --workspace=apps/api` |
-| Run web only | `npm run dev --workspace=apps/web` |
-| Build all | `npm run build` (root) |
-| Test all | `npm run test` (root) — currently only `apps/api` has tests (Jest) |
+| Run dev | `npm run dev --workspace=apps/web` (or `npm run dev` at root) |
+| Build | `npm run build --workspace=apps/web` (or `npm run build` at root) |
+| Auth | Better Auth (cookie-based session), config in `apps/web/src/server/auth.ts`, handler at `apps/web/src/app/api/auth/[...all]/route.ts` |
 | DB migrate | `npm run db:migrate --workspace=packages/db` (Prisma) |
 | DB seed | `ts-node packages/db/prisma/seed.ts` (registered as the `prisma.seed` script in `packages/db/package.json`) |
 | DB generate client | `npm run db:generate --workspace=packages/db` |

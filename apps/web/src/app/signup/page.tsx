@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL, setToken, request } from "../../lib/api";
+import { authClient } from "../../lib/auth-client";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -15,32 +15,17 @@ export default function SignupPage() {
     setError(null);
     setSubmitting(true);
 
-    const registerResult = await request(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
+    // Better Auth's emailAndPassword.autoSignIn signs the user in immediately after
+    // signUp.email succeeds, so no separate login call is needed (unlike the old
+    // NestJS flow, which required a manual login POST right after register).
+    const { error: signUpError } = await authClient.signUp.email({ email, password, name });
 
-    if (!registerResult.ok) {
-      setError(registerResult.message);
+    if (signUpError) {
+      setError(signUpError.message || "An account with this email already exists.");
       setSubmitting(false);
       return;
     }
 
-    // Registration doesn't return a session, so log in immediately after.
-    const loginResult = await request<{ token: string }>(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (!loginResult.ok) {
-      setError(`Account created, but automatic sign-in failed: ${loginResult.message} Please sign in manually.`);
-      setSubmitting(false);
-      return;
-    }
-
-    setToken(loginResult.data.token);
     window.location.href = "/";
   };
 
