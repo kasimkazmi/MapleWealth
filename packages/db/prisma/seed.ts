@@ -1,7 +1,12 @@
 import { PrismaClient, AccountType, AccountPurpose, GoalType, RecurringRuleType, Frequency, AssetType } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as bcrypt from 'bcryptjs';
+// Uses Better Auth's own scrypt-based hasher (not bcryptjs) so the seeded credential matches
+// exactly what auth.api.signInEmail()/verifyPassword() expect at login time. Better Auth's
+// email/password provider also expects providerId "credential" (singular) on the AuthAccount
+// row, not "credentials" — both of these were landmines carried over from the old NestJS
+// AuthService, which used bcrypt + "credentials" for its own hand-rolled scheme.
+import { hashPassword } from 'better-auth/crypto';
 
 const prisma = new PrismaClient();
 
@@ -40,13 +45,13 @@ async function main() {
     },
   });
 
-  // Create login credentials for the seeded user so it can actually sign in.
-  const passwordHash = await bcrypt.hash(SEED_USER_PASSWORD, 12);
+  // Create login credentials for the seeded user so it can actually sign in via Better Auth.
+  const passwordHash = await hashPassword(SEED_USER_PASSWORD);
   await prisma.authAccount.create({
     data: {
       userId: user.id,
       accountId: user.id,
-      providerId: 'credentials',
+      providerId: 'credential',
       password: passwordHash,
     },
   });
