@@ -57,11 +57,13 @@ export function useDashboard() {
         apiFetch(`/reports/monthly`),
       ]);
 
-      if (!profileRes.ok || !netWorthRes.ok || !accountsRes.ok || !goalsRes.ok) {
-        throw new Error("Unable to fetch data from API. Is the NestJS backend running?");
+      if (!netWorthRes.ok || !accountsRes.ok || !goalsRes.ok) {
+        throw new Error("Unable to fetch data from the API. Please try again.");
       }
 
-      setProfile(await profileRes.json());
+      // A 404 here just means the user hasn't set up their financial profile
+      // yet — not an error condition. FinancialProfileForm handles a null profile.
+      setProfile(profileRes.ok ? await profileRes.json() : null);
       setNetWorth(await netWorthRes.json());
       setAccounts(await accountsRes.json());
       setGoals(await goalsRes.json());
