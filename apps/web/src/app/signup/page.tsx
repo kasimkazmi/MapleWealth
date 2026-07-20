@@ -38,7 +38,8 @@ export default function SignupPage() {
           className="hd-card relative w-full p-8 space-y-5 rotate-1"
           style={{ boxShadow: "8px 8px 0px 0px var(--border)" }}
         >
-          <div className="text-center mb-2">
+          <div className="text-center mb-2 flex flex-col items-center justify-center">
+            <img src="/logo.png" alt="MapleWealth Logo" className="w-16 h-16 object-contain mb-4" />
             <h1 className="hd-wavy-underline text-4xl">MapleWealth</h1>
             <p className="text-lg mt-2">Create your money notebook.</p>
           </div>

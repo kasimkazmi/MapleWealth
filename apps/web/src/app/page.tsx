@@ -99,7 +99,7 @@ export default function Dashboard() {
       >
         <div>
           <div className="flex items-center gap-3 mb-8">
-            <Compass className="w-8 h-8" style={{ color: "var(--accent-2)" }} />
+            <img src="/logo.png" alt="MapleWealth Logo" className="w-10 h-10 object-contain" />
             <span className="text-2xl hd-wavy-underline">
               MapleWealth
             </span>
