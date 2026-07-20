@@ -34,6 +34,9 @@ export const auth = betterAuth({
     // Better Auth's own scrypt-based hashing is used (no bcryptjs dependency needed) —
     // this replaces the old bcrypt.hash(data.password, 12) call in AuthService.register.
     autoSignIn: true,
+    sendResetPassword: async ({ user, url }) => {
+      console.log(`\n\n=== PASSWORD RESET LINK ===\nUser: ${user.email}\nLink: ${url}\n===========================\n\n`);
+    },
   },
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
