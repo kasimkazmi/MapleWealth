@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { dash } from "@better-auth/infra";
 import { prisma } from "../lib/prisma";
 
 // The Prisma schema's User/Session/AuthAccount/Verification models were shaped to match
@@ -45,6 +46,7 @@ export const auth = betterAuth({
       generateId: false, // let Postgres/Prisma's @default(uuid()) generate ids
     },
   },
+  plugins: [dash()],
 });
 
 export type Session = typeof auth.$Infer.Session;

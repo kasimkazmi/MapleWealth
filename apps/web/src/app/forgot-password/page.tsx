@@ -14,6 +14,7 @@ export default function ForgotPasswordPage() {
     setError(null);
     setSubmitting(true);
 
+    // @ts-ignore - Better Auth proxy handles this, but types are not inferred correctly by default
     const { error: resetError } = await authClient.forgetPassword({
       email,
       redirectTo: "/reset-password",
