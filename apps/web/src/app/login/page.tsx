@@ -37,9 +37,8 @@ export default function LoginPage() {
           style={{ boxShadow: "8px 8px 0px 0px var(--border)" }}
         >
           <div className="text-center mb-2 flex flex-col items-center justify-center">
-            <img src="/logo.png" alt="MapleWealth Logo" className="w-16 h-16 object-contain mb-4" />
-            <h1 className="hd-wavy-underline text-4xl">MapleWealth</h1>
-            <p className="text-lg mt-2">Sign in to your money notebook.</p>
+            <img src="/logo.png" alt="MapleWealth Logo" className="w-32 h-32 object-contain mb-1" />
+            <p className="text-lg">Sign in to your money notebook.</p>
           </div>
 
           {error && (
