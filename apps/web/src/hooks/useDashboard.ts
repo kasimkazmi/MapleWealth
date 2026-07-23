@@ -72,9 +72,14 @@ export function useDashboard() {
       setRules(await rulesRes.json());
       setRoom(await roomRes.json());
       setReport(await reportRes.json());
+      
+      setLoading(false);
     } catch (err) {
+      if (err instanceof Error && err.name === 'SessionExpiredError') {
+        // Allow the apiFetch redirection to happen without flashing an error state
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to load financial data.");
-    } finally {
       setLoading(false);
     }
   }, []);
