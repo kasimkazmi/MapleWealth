@@ -166,11 +166,8 @@ export default function CreditCardsClient() {
         style={{ borderRight: "3px solid var(--border)", background: "var(--card)" }}
       >
         <div>
-          <div className="flex items-center gap-3 mb-8">
-            <img src="/logo.png" alt="MapleWealth Logo" className="w-10 h-10 object-contain" />
-            <span className="text-2xl hd-wavy-underline">
-              MapleWealth
-            </span>
+          <div className="flex items-center justify-center mb-8">
+            <img src="/logo.png" alt="MapleWealth Logo" className="w-32 object-contain" />
           </div>
 
           <nav className="space-y-2">
