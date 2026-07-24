@@ -1,7 +1,14 @@
 const productLinks = [
   { label: "The Priority Ladder", href: "#priority-ladder" },
   { label: "Features", href: "#features" },
+  { label: "See it in action", href: "#product-tour" },
   { label: "How It Works", href: "#how-it-works" },
+  { label: "Questions", href: "#faq" },
+];
+
+const legalLinks = [
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms & Conditions", href: "/terms" },
 ];
 
 export function Footer() {
@@ -14,7 +21,7 @@ export function Footer() {
       style={{ borderTop: "2px dashed var(--border)" }}
     >
       <div className="max-w-5xl mx-auto w-full">
-        <div className="grid md:grid-cols-3 gap-10 mb-10">
+        <div className="grid md:grid-cols-4 gap-10 mb-10">
           <div>
             <img src="/logo.png" alt="MapleWealth Logo" className="w-20 object-contain mb-3" />
             <p className="text-base" style={{ opacity: 0.75 }}>
@@ -27,6 +34,19 @@ export function Footer() {
             <h3 className="text-lg mb-3">Product</h3>
             <ul className="space-y-2">
               {productLinks.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} className="text-base underline" style={{ color: "var(--accent-2)" }}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-lg mb-3">Legal</h3>
+            <ul className="space-y-2">
+              {legalLinks.map((link) => (
                 <li key={link.href}>
                   <a href={link.href} className="text-base underline" style={{ color: "var(--accent-2)" }}>
                     {link.label}
