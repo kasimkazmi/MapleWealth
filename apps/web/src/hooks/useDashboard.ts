@@ -7,6 +7,7 @@ export function useDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<FinancialProfile | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [netWorth, setNetWorth] = useState<{ assets: number; debt: number; netWorth: number }>({ assets: 0, debt: 0, netWorth: 0 });
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -45,6 +46,7 @@ export function useDashboard() {
         rulesRes,
         roomRes,
         reportRes,
+        subRes,
       ] = await Promise.all([
         apiFetch(`/profile`),
         apiFetch(`/accounts/net-worth`),
@@ -55,6 +57,7 @@ export function useDashboard() {
         apiFetch(`/rules/evaluate`),
         apiFetch(`/registered-accounts/room`),
         apiFetch(`/reports/monthly`),
+        apiFetch(`/billing/subscription`),
       ]);
 
       if (!netWorthRes.ok || !accountsRes.ok || !goalsRes.ok) {
@@ -72,6 +75,7 @@ export function useDashboard() {
       setRules(await rulesRes.json());
       setRoom(await roomRes.json());
       setReport(await reportRes.json());
+      setIsPremium(subRes.ok ? (await subRes.json()).isPremium : false);
       
       setLoading(false);
     } catch (err) {
@@ -130,6 +134,8 @@ export function useDashboard() {
     setTradeForm,
     activeTab,
     setActiveTab,
+    isPremium,
+    setIsPremium,
     fetchData,
     handleRecordTrade
   };

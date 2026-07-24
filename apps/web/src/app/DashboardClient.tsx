@@ -1,10 +1,15 @@
 "use client";
 
+import { useSession } from "../lib/auth-client";
 import { useDashboard } from "../hooks/useDashboard";
 import { Card } from "../components/Card";
+import { Onboarding } from "../components/Onboarding";
 import { NetWorthTab } from "../components/NetWorthTab";
 import { InvestmentsTab } from "../components/InvestmentsTab";
-import { logout } from "../lib/api";
+import { logout, apiFetch } from "../lib/api";
+import { useEffect } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   Wallet,
@@ -17,10 +22,12 @@ import {
   X,
   Compass,
   ArrowUpRight,
-  LogOut
+  LogOut,
+  CreditCard
 } from "lucide-react";
 
 export default function Dashboard() {
+  const { data: session } = useSession();
   const {
     loading,
     error,
@@ -38,9 +45,35 @@ export default function Dashboard() {
     setTradeForm,
     activeTab,
     setActiveTab,
+    isPremium,
     fetchData,
     handleRecordTrade
   } = useDashboard();
+
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get("tab");
+
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam, setActiveTab]);
+
+  const handleUpgrade = async () => {
+    try {
+      const res = await apiFetch("/billing/checkout", { method: "POST" });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to initiate billing session");
+      }
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Billing checkout error");
+    }
+  };
 
   if (loading) {
     return (
@@ -54,6 +87,10 @@ export default function Dashboard() {
         </div>
       </div>
     );
+  }
+
+  if (profile === null) {
+    return <Onboarding onCompleted={fetchData} />;
   }
 
   if (error) {
@@ -145,14 +182,42 @@ export default function Dashboard() {
             >
               <LineChart className="w-4 h-4" /> Investments
             </button>
+            <Link
+              href="/credit-cards"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
+              style={{ opacity: 0.65 }}
+            >
+              <CreditCard className="w-4 h-4" /> Credit Cards
+            </Link>
           </nav>
         </div>
 
         <div className="hd-card hd-card--tight p-4 rotate-1">
           <div className="text-xs uppercase tracking-wider font-bold mb-2" style={{ opacity: 0.55 }}>User Profile</div>
-          <div className="font-bold text-lg">{profile?.userId ? "Master" : "Guest User"}</div>
+          <div className="font-bold text-lg truncate" title={session?.user?.name || session?.user?.email || "Guest User"}>
+            {session?.user?.name || "Guest User"}
+          </div>
+          {session?.user?.name && (
+            <div className="text-xs truncate mb-1" style={{ opacity: 0.65 }}>
+              {session.user.email}
+            </div>
+          )}
           <div className="text-sm font-bold" style={{ color: "var(--accent-2)" }}>Software Developer</div>
-          <div className="text-sm mt-1" style={{ opacity: 0.65 }}>Salary: ${profile?.annualSalary ? Number(profile.annualSalary).toLocaleString() : "0"} CAD</div>
+          <div className="text-sm mt-1 mb-2" style={{ opacity: 0.65 }}>Salary: ${profile?.annualSalary ? Number(profile.annualSalary).toLocaleString() : "0"} CAD</div>
+          
+          {isPremium ? (
+            <div className="text-xs font-bold text-emerald-600 bg-emerald-50 py-1 px-2.5 rounded border border-emerald-300 text-center">
+              ★ Premium Active
+            </div>
+          ) : (
+            <button
+              onClick={handleUpgrade}
+              className="hd-btn w-full text-xs py-1.5 cursor-pointer font-bold block text-center"
+              style={{ background: "var(--postit)" }}
+            >
+              Go Premium ($5/mo)
+            </button>
+          )}
         </div>
       </aside>
 

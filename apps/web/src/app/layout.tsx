@@ -24,11 +24,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+
   return (
     <html
       lang="en"
       className={`${kalam.variable} ${patrickHand.variable} h-full antialiased`}
     >
+      <head>
+        {adsenseClientId && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+            crossOrigin="anonymous"
+          />
+        )}
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
