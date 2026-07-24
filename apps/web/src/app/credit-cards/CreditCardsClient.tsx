@@ -172,21 +172,21 @@ export default function CreditCardsClient() {
 
           <nav className="space-y-2">
             <Link
-              href="/"
+              href="/dashboard"
               className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
               style={{ opacity: 0.65 }}
             >
               <LayoutDashboard className="w-4 h-4" /> Dashboard
             </Link>
             <Link
-              href="/?tab=accounts"
+              href="/dashboard?tab=accounts"
               className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
               style={{ opacity: 0.65 }}
             >
               <Wallet className="w-4 h-4" /> Net Worth
             </Link>
             <Link
-              href="/?tab=investments"
+              href="/dashboard?tab=investments"
               className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
               style={{ opacity: 0.65 }}
             >

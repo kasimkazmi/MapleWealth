@@ -27,7 +27,7 @@ export default function SignupPage() {
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = "/dashboard";
   };
 
   return (

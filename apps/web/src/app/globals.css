@@ -173,6 +173,53 @@ h1, h2, h3, h4, .font-hand-heading {
   opacity: 0.6;
 }
 
+/* ---- Motion ---- */
+
+@keyframes hd-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.6; }
+}
+
+.hd-pulse-dot {
+  animation: hd-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes hd-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hd-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.hd-reveal--visible {
+  animation: hd-fade-up 0.5s ease-out forwards;
+}
+
+@keyframes hd-swap {
+  0% { opacity: 0; transform: translateY(6px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.hd-swap {
+  animation: hd-swap linear both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hd-pulse-dot,
+  .hd-reveal--visible,
+  .hd-swap {
+    animation: none !important;
+  }
+  .hd-reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Custom scrollbar to match paper theme */
 ::-webkit-scrollbar {
   width: 10px;
