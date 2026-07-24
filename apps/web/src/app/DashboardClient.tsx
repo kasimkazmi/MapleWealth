@@ -91,10 +91,10 @@ export default function Dashboard() {
   const progressEf = Math.min(100, (efProgress / efTarget) * 100);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen overflow-hidden flex">
       {/* Sidebar */}
       <aside
-        className="w-64 p-6 flex-col justify-between hidden md:flex"
+        className="w-64 p-6 flex-col justify-between hidden md:flex h-full"
         style={{ borderRight: "3px solid var(--border)", background: "var(--card)" }}
       >
         <div>
@@ -157,9 +157,9 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Top Header */}
-        <header className="flex justify-between items-center hd-divider-dashed pb-6">
+        <header className="sticky top-0 z-20 flex justify-between items-center p-6 md:p-8 pb-6 border-b-3 border-dashed border-[var(--border)]" style={{ backgroundColor: "var(--background)" }}>
           <div>
             <h1 className="text-4xl">Financial Command Center</h1>
             <p className="text-sm mt-1" style={{ opacity: 0.65 }}>Canadian personal wealth optimization plan tracking.</p>
@@ -174,6 +174,9 @@ export default function Dashboard() {
             </button>
           </div>
         </header>
+
+        {/* Scrollable Main Area */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
 
         {activeTab === "dashboard" && (
           <div className="space-y-8">
@@ -340,6 +343,36 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {report && report.financials && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 text-sm">
+                  <div className="hd-card p-4 flex flex-col justify-between rotate-1" style={{ background: "var(--postit)", minHeight: "90px" }}>
+                    <span className="text-xs font-bold uppercase tracking-wider opacity-75">Total Income</span>
+                    <div className="text-2xl font-bold mt-2">
+                      ${report.financials.totalIncome.toLocaleString("en-CA", { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  <div className="hd-card p-4 flex flex-col justify-between -rotate-1" style={{ background: "var(--muted)", minHeight: "90px" }}>
+                    <span className="text-xs font-bold uppercase tracking-wider opacity-75">Total Expenses</span>
+                    <div className="text-2xl font-bold mt-2" style={{ color: "var(--accent-3)" }}>
+                      ${report.financials.totalExpenses.toLocaleString("en-CA", { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  <div className="hd-card p-4 flex flex-col justify-between rotate-1" style={{ background: "var(--postit)", minHeight: "90px" }}>
+                    <span className="text-xs font-bold uppercase tracking-wider opacity-75">Net Savings</span>
+                    <div className="text-2xl font-bold mt-2" style={{ color: "var(--accent-2)" }}>
+                      ${report.financials.savings.toLocaleString("en-CA", { minimumFractionDigits: 2 })}
+                      <span className="text-xs font-normal ml-1">({(report.financials.savingsRate * 100).toFixed(0)}%)</span>
+                    </div>
+                  </div>
+                  <div className="hd-card p-4 flex flex-col justify-between -rotate-1" style={{ background: "var(--muted)", minHeight: "90px" }}>
+                    <span className="text-xs font-bold uppercase tracking-wider opacity-75">Net Worth</span>
+                    <div className="text-2xl font-bold mt-2">
+                      ${report.financials.netWorth.toLocaleString("en-CA", { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div
                 className="space-y-4 text-sm leading-relaxed whitespace-pre-wrap p-6"
                 style={{ border: "2px dashed var(--border)", borderRadius: "var(--radius-wobbly-sm)" }}
@@ -439,6 +472,7 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+        </div>
       </main>
     </div>
   );
