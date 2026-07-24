@@ -21,7 +21,8 @@ export default function ForgotPasswordPage() {
     });
 
     if (resetError) {
-      setError(resetError.message || "Failed to send reset link.");
+      console.error("Reset password error:", resetError);
+      setError(resetError.message || `Error details: ${JSON.stringify(resetError)}`);
       setSubmitting(false);
       return;
     }
