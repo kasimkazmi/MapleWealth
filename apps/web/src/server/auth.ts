@@ -39,7 +39,7 @@ export const auth = betterAuth({
       console.log(`\n\n=== PASSWORD RESET LINK ===\nUser: ${user.email}\nLink: ${url}\n===========================\n\n`);
     },
   },
-  secret: process.env.BETTER_AUTH_SECRET,
+  secret: process.env.BETTER_AUTH_SECRET || "build_placeholder_secret_key_12345",
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   advanced: {
     database: {
