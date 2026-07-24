@@ -14,7 +14,7 @@ export function Hero() {
         <div className="grid md:grid-cols-2 gap-10 items-center">
           <div>
             <h1 className="text-4xl md:text-5xl leading-tight mb-4">
-              Know exactly where your <span className="hd-wavy-underline">next dollar</span> should go.
+              Know exactly where your <span className="hd-marker-highlight">next dollar</span> should go.
             </h1>
             <p className="text-lg md:text-xl mb-6" style={{ opacity: 0.8 }}>
               MapleWealth tracks your net worth and tells you what to fund next — Emergency Fund,
