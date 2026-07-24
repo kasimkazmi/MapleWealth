@@ -21,7 +21,8 @@ export default function SignupPage() {
     const { error: signUpError } = await authClient.signUp.email({ email, password, name });
 
     if (signUpError) {
-      setError(signUpError.message || "An account with this email already exists.");
+      console.error("Sign up error:", signUpError);
+      setError(signUpError.message || `Error details: ${JSON.stringify(signUpError)}`);
       setSubmitting(false);
       return;
     }
