@@ -23,6 +23,7 @@ interface CardDetails {
   id: string;
   name: string;
   bank: string;
+  brandColor: string;
   fee: number;
   perks: string[];
   tips: string;
@@ -42,6 +43,7 @@ const CREDIT_CARDS: CardDetails[] = [
     id: "scotia-momentum",
     name: "Momentum Infinite Bill-Slasher",
     bank: "Scotia",
+    brandColor: "#EC111A",
     fee: 120,
     perks: [
       "4% cash back on groceries and recurring bills",
@@ -58,6 +60,7 @@ const CREDIT_CARDS: CardDetails[] = [
     id: "rogers-red",
     name: "Rogers Red Telecom Saver",
     bank: "Rogers Bank",
+    brandColor: "#D6001C",
     fee: 0,
     perks: [
       "2% value towards Rogers/Shaw/Fido bill payments",
@@ -74,6 +77,7 @@ const CREDIT_CARDS: CardDetails[] = [
     id: "tangerine-cashback",
     name: "Tangerine Category Customizer",
     bank: "Tangerine",
+    brandColor: "#FF6600",
     fee: 0,
     perks: [
       "2% cash back on up to 3 select categories of your choice",
@@ -90,6 +94,7 @@ const CREDIT_CARDS: CardDetails[] = [
     id: "simplii-cashback",
     name: "Simplii Foodie Cash Back",
     bank: "Simplii Financial",
+    brandColor: "#00A650",
     fee: 0,
     perks: [
       "4% rewards on restaurant dining, cafes, and bars",
@@ -103,6 +108,30 @@ const CREDIT_CARDS: CardDetails[] = [
     referralUrl: "#"
   }
 ];
+
+function bankInitials(bank: string): string {
+  return bank
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
+function BankBadge({ bank, brandColor, size = "md" }: { bank: string; brandColor: string; size?: "sm" | "md" }) {
+  const dimension = size === "sm" ? "w-10 h-10 text-xs" : "w-14 h-14 text-sm";
+  return (
+    <div
+      className={`${dimension} shrink-0 rounded-full flex items-center justify-center font-extrabold text-white border-2 border-(--border)`}
+      style={{ background: brandColor }}
+      title={bank}
+      aria-label={`${bank} logo`}
+    >
+      {bankInitials(bank)}
+    </div>
+  );
+}
 
 export default function CreditCardsClient() {
   const { data: session } = useSession();
@@ -298,7 +327,10 @@ export default function CreditCardsClient() {
               <Card title="Best Card Recommendation" icon={<Sparkles className="w-5 h-5" style={{ color: "var(--accent-2)" }} />} decoration="tack" postit rotate="rotate-1">
                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                   <div>
-                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">{bestCard.bank}</span>
+                    <div className="flex items-center gap-3 mb-1">
+                      <BankBadge bank={bestCard.bank} brandColor={bestCard.brandColor} />
+                      <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">{bestCard.bank}</span>
+                    </div>
                     <h3 className="text-3xl font-bold mt-1 text-[var(--accent-2)]">{bestCard.name}</h3>
                     <p className="text-sm mt-3 font-semibold text-neutral-700">Estimated Annual Net Value:</p>
                     <div className="text-4xl font-extrabold mt-1 text-emerald-600">
@@ -335,7 +367,10 @@ export default function CreditCardsClient() {
                 <div key={card.id} className="relative hd-card p-6 flex flex-col justify-between" style={{ background: "var(--card)" }}>
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">{card.bank}</span>
+                      <div className="flex items-center gap-2">
+                        <BankBadge bank={card.bank} brandColor={card.brandColor} size="sm" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">{card.bank}</span>
+                      </div>
                       <span className="text-xs font-bold py-1 px-2.5 bg-neutral-100 rounded border border-neutral-300 text-neutral-600">
                         {card.fee === 0 ? "No Fee" : `$${card.fee}/year`}
                       </span>

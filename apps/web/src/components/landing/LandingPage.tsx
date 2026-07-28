@@ -6,12 +6,10 @@ import { HowItWorks } from "./HowItWorks";
 import { Faq } from "./Faq";
 import { ClosingCta } from "./ClosingCta";
 import { Footer } from "./Footer";
-import { FloatingNav } from "./FloatingNav";
 
 export function LandingPage() {
   return (
     <>
-      <FloatingNav />
       <div className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
         <Hero />
         <PriorityLadder />
