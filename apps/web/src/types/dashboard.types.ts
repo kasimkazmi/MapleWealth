@@ -29,6 +29,7 @@ export interface FinancialProfile {
   id: string;
   userId: string;
   age: number | null;
+  occupation: string | null;
   annualSalary: string;
   monthlyTakeHome: string;
   monthlyExpenses: string;

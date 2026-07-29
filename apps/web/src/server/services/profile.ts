@@ -3,6 +3,7 @@ import { HttpError } from "../request-context";
 
 export interface UpdateProfileInput {
   age?: number;
+  occupation?: string;
   annualSalary?: number;
   monthlyTakeHome?: number;
   monthlyExpenses?: number;
@@ -48,6 +49,7 @@ export async function updateProfile(
     create: {
       userId,
       age: data.age,
+      occupation: data.occupation,
       annualSalary: data.annualSalary || 0,
       monthlyTakeHome: data.monthlyTakeHome || 0,
       monthlyExpenses: data.monthlyExpenses || 0,

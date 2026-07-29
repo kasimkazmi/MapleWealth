@@ -247,3 +247,63 @@ h1, h2, h3, h4, .font-hand-heading {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
 }
+
+/* Rendered markdown for the automated financial summary report */
+.hd-report {
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.hd-report h3 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.hd-report h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent-2);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.hd-report h4:first-child {
+  margin-top: 0;
+}
+
+.hd-report p {
+  margin-bottom: 0.75rem;
+}
+
+.hd-report strong {
+  font-weight: 700;
+}
+
+.hd-report ul,
+.hd-report ol {
+  margin: 0.5rem 0 0.75rem 1.25rem;
+}
+
+.hd-report ul {
+  list-style: disc;
+}
+
+.hd-report ol {
+  list-style: decimal;
+}
+
+.hd-report li {
+  margin-bottom: 0.25rem;
+}
+
+.hd-report blockquote {
+  margin: 0.5rem 0 1rem;
+  padding: 0.5rem 1rem;
+  border-left: 4px solid var(--accent-2);
+  background: var(--postit);
+  border-radius: var(--radius-wobbly-sm);
+  font-style: italic;
+}

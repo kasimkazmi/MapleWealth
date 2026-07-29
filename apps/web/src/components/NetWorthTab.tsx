@@ -2,25 +2,208 @@
 
 import { useState } from "react";
 import { apiFetch } from "../lib/api";
-import { FinancialProfile, Goal, GoalPayload, GoalType } from "../types/dashboard.types";
-import { Wallet, Target, Plus, Pencil } from "lucide-react";
+import { Account, AccountPurpose, AccountType, FinancialProfile, Goal, GoalPayload, GoalType } from "../types/dashboard.types";
+import { Wallet, Target, Plus, Pencil, Landmark } from "lucide-react";
 
 const inputClass = "hd-input p-2.5";
 const labelClass = "block font-bold mb-1 text-sm";
 
 const GOAL_TYPES: GoalType[] = ["emergency_fund", "vacation", "net_worth", "home", "investment", "custom"];
+const ACCOUNT_TYPES: AccountType[] = ["chequing", "savings", "tfsa", "fhsa", "rrsp", "non_registered", "credit_card", "loan", "cash"];
+const ACCOUNT_PURPOSES: AccountPurpose[] = ["emergency", "vacation", "investment", "bills", "general", "home_down_payment"];
 
 interface NetWorthTabProps {
   profile: FinancialProfile | null;
   goals: Goal[];
+  accounts: Account[];
   onRefetch: () => void;
 }
 
-export function NetWorthTab({ profile, goals, onRefetch }: NetWorthTabProps) {
+export function NetWorthTab({ profile, goals, accounts, onRefetch }: NetWorthTabProps) {
   return (
     <div className="space-y-8">
+      <AccountsManager accounts={accounts} onChanged={onRefetch} />
       <FinancialProfileForm profile={profile} onSaved={onRefetch} />
       <GoalsManager goals={goals} onChanged={onRefetch} />
+    </div>
+  );
+}
+
+function AccountsManager({ accounts, onChanged }: { accounts: Account[]; onChanged: () => void }) {
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    institution: "",
+    name: "",
+    type: "chequing" as AccountType,
+    purpose: "general" as AccountPurpose,
+    currentBalance: ""
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const openCreate = () => {
+    setForm({ institution: "", name: "", type: "chequing", purpose: "general", currentBalance: "" });
+    setError(null);
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await apiFetch("/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          institution: form.institution,
+          name: form.name,
+          type: form.type,
+          purpose: form.purpose,
+          currentBalance: Number(form.currentBalance) || 0
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to add account");
+      }
+
+      setShowForm(false);
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add account");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="hd-card p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-2xl flex items-center gap-2">
+          <Landmark className="w-5 h-5" style={{ color: "var(--accent-2)" }} /> Accounts
+        </h3>
+        <button onClick={openCreate} className="hd-btn hd-btn--secondary px-3 py-1.5 text-sm">
+          <Plus className="w-4 h-4" /> Add Account
+        </button>
+      </div>
+
+      <p className="text-sm mb-4" style={{ opacity: 0.7 }}>
+        Net Worth is calculated from the accounts you add here — nothing shows up on the dashboard until at least one account exists.
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead>
+            <tr className="hd-divider-dashed">
+              <th className="pb-3 pt-2">Institution</th>
+              <th className="pb-3 pt-2">Name</th>
+              <th className="pb-3 pt-2">Type</th>
+              <th className="pb-3 pt-2 text-right">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {accounts.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="py-4 text-center" style={{ opacity: 0.6 }}>No accounts added yet.</td>
+              </tr>
+            ) : (
+              accounts.map((a) => (
+                <tr key={a.id} className="hd-divider-dashed">
+                  <td className="py-3 font-bold">{a.institution}</td>
+                  <td className="py-3">{a.name}</td>
+                  <td className="py-3 capitalize">{a.type.replace("_", " ")}</td>
+                  <td className="py-3 text-right">${Number(a.currentBalance).toLocaleString("en-CA", { minimumFractionDigits: 2 })}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="hd-card w-full max-w-md p-6 -rotate-1" style={{ boxShadow: "8px 8px 0px 0px var(--border)" }}>
+            <h4 className="text-2xl mb-4">Add Account</h4>
+
+            {error && (
+              <div className="mb-4 text-sm px-3 py-2" style={{ border: "2px dashed var(--border)", borderRadius: "var(--radius-wobbly-sm)", background: "var(--postit)" }}>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+              <div>
+                <label className={labelClass}>Institution</label>
+                <input
+                  required
+                  placeholder="e.g. RBC, Wealthsimple"
+                  value={form.institution}
+                  onChange={(e) => setForm({ ...form, institution: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Account Name</label>
+                <input
+                  required
+                  placeholder="e.g. Everyday Chequing"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Type</label>
+                  <select
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value as AccountType })}
+                    className={inputClass}
+                  >
+                    {ACCOUNT_TYPES.map((t) => (
+                      <option key={t} value={t}>{t.replace("_", " ")}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Purpose</label>
+                  <select
+                    value={form.purpose}
+                    onChange={(e) => setForm({ ...form, purpose: e.target.value as AccountPurpose })}
+                    className={inputClass}
+                  >
+                    {ACCOUNT_PURPOSES.map((p) => (
+                      <option key={p} value={p}>{p.replace("_", " ")}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Current Balance (CAD)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={form.currentBalance}
+                  onChange={(e) => setForm({ ...form, currentBalance: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={submitting} className="hd-btn flex-1 py-2.5">
+                  {submitting ? "Saving..." : "Add Account"}
+                </button>
+                <button type="button" onClick={() => setShowForm(false)} className="hd-btn hd-btn--secondary px-4 py-2.5">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -28,6 +211,7 @@ export function NetWorthTab({ profile, goals, onRefetch }: NetWorthTabProps) {
 function FinancialProfileForm({ profile, onSaved }: { profile: FinancialProfile | null; onSaved: () => void }) {
   const [form, setForm] = useState({
     age: profile?.age?.toString() ?? "",
+    occupation: profile?.occupation ?? "",
     annualSalary: profile?.annualSalary ?? "",
     monthlyTakeHome: profile?.monthlyTakeHome ?? "",
     monthlyExpenses: profile?.monthlyExpenses ?? "",
@@ -47,9 +231,10 @@ function FinancialProfileForm({ profile, onSaved }: { profile: FinancialProfile 
     setSaving(true);
     setMessage(null);
     try {
-      const payload: Record<string, number> = {};
+      const payload: Record<string, number | string> = {};
       for (const [key, value] of Object.entries(form)) {
-        if (value !== "" && value !== null) payload[key] = Number(value);
+        if (value === "" || value === null) continue;
+        payload[key] = key === "occupation" ? value : Number(value);
       }
 
       const res = await apiFetch("/profile", {
@@ -101,6 +286,10 @@ function FinancialProfileForm({ profile, onSaved }: { profile: FinancialProfile 
             <div>
               <label className={labelClass}>Age</label>
               <input type="number" value={form.age} onChange={update("age")} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Occupation</label>
+              <input type="text" value={form.occupation} onChange={update("occupation")} className={inputClass} placeholder="e.g. Software Developer" />
             </div>
             <div>
               <label className={labelClass}>Annual Salary</label>

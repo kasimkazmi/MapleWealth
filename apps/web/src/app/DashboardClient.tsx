@@ -1,5 +1,6 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
 import { useSession } from "../lib/auth-client";
 import { useDashboard } from "../hooks/useDashboard";
 import { Card } from "../components/Card";
@@ -7,8 +8,8 @@ import { Onboarding } from "../components/Onboarding";
 import { NetWorthTab } from "../components/NetWorthTab";
 import { InvestmentsTab } from "../components/InvestmentsTab";
 import { logout, apiFetch } from "../lib/api";
+import { Sidebar } from "../components/Sidebar";
 import { useEffect } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
@@ -130,93 +131,42 @@ export default function Dashboard() {
   return (
     <div className="h-screen overflow-hidden flex">
       {/* Sidebar */}
-      <aside
-        className="w-64 p-6 flex-col justify-between hidden md:flex h-full"
-        style={{ borderRight: "3px solid var(--border)", background: "var(--card)" }}
-      >
-        <div>
-          <div className="flex items-center justify-center mb-8">
-            <img src="/logo.png" alt="MapleWealth Logo" className="w-32 object-contain" />
-          </div>
-
-          <nav className="space-y-2">
-            <button
-              onClick={() => setActiveTab("dashboard")}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer ${
-                activeTab === "dashboard" ? "hover:rotate-0" : "hover:-rotate-1"
-              }`}
-              style={
-                activeTab === "dashboard"
-                  ? { background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-sm)" }
-                  : { opacity: 0.65 }
-              }
-            >
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </button>
-            <button
-              onClick={() => setActiveTab("accounts")}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer ${
-                activeTab === "accounts" ? "hover:rotate-0" : "hover:-rotate-1"
-              }`}
-              style={
-                activeTab === "accounts"
-                  ? { background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-sm)" }
-                  : { opacity: 0.65 }
-              }
-            >
-              <Wallet className="w-4 h-4" /> Net Worth
-            </button>
-            <button
-              onClick={() => setActiveTab("investments")}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer ${
-                activeTab === "investments" ? "hover:rotate-0" : "hover:-rotate-1"
-              }`}
-              style={
-                activeTab === "investments"
-                  ? { background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-sm)" }
-                  : { opacity: 0.65 }
-              }
-            >
-              <LineChart className="w-4 h-4" /> Investments
-            </button>
-            <Link
-              href="/credit-cards"
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
-              style={{ opacity: 0.65 }}
-            >
-              <CreditCard className="w-4 h-4" /> Credit Cards
-            </Link>
-          </nav>
-        </div>
-
-        <div className="hd-card hd-card--tight p-4 rotate-1">
-          <div className="text-xs uppercase tracking-wider font-bold mb-2" style={{ opacity: 0.55 }}>User Profile</div>
-          <div className="font-bold text-lg truncate" title={session?.user?.name || session?.user?.email || "Guest User"}>
-            {session?.user?.name || "Guest User"}
-          </div>
-          {session?.user?.name && (
-            <div className="text-xs truncate mb-1" style={{ opacity: 0.65 }}>
-              {session.user.email}
-            </div>
-          )}
-          <div className="text-sm font-bold" style={{ color: "var(--accent-2)" }}>Software Developer</div>
-          <div className="text-sm mt-1 mb-2" style={{ opacity: 0.65 }}>Salary: ${profile?.annualSalary ? Number(profile.annualSalary).toLocaleString() : "0"} CAD</div>
-          
-          {isPremium ? (
-            <div className="text-xs font-bold text-emerald-600 bg-emerald-50 py-1 px-2.5 rounded border border-emerald-300 text-center">
-              ★ Premium Active
-            </div>
-          ) : (
-            <button
-              onClick={handleUpgrade}
-              className="hd-btn w-full text-xs py-1.5 cursor-pointer font-bold block text-center"
-              style={{ background: "var(--postit)" }}
-            >
-              Go Premium ($5/mo)
-            </button>
-          )}
-        </div>
-      </aside>
+      <Sidebar
+        session={session}
+        profile={profile}
+        isPremium={isPremium}
+        onUpgrade={handleUpgrade}
+        navItems={[
+          {
+            key: "dashboard",
+            label: "Dashboard",
+            icon: <LayoutDashboard className="w-4 h-4" />,
+            onClick: () => setActiveTab("dashboard"),
+            active: activeTab === "dashboard"
+          },
+          {
+            key: "accounts",
+            label: "Net Worth",
+            icon: <Wallet className="w-4 h-4" />,
+            onClick: () => setActiveTab("accounts"),
+            active: activeTab === "accounts"
+          },
+          {
+            key: "investments",
+            label: "Investments",
+            icon: <LineChart className="w-4 h-4" />,
+            onClick: () => setActiveTab("investments"),
+            active: activeTab === "investments"
+          },
+          {
+            key: "credit-cards",
+            label: "Credit Cards",
+            icon: <CreditCard className="w-4 h-4" />,
+            href: "/credit-cards",
+            active: false
+          }
+        ]}
+      />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
@@ -436,17 +386,21 @@ export default function Dashboard() {
               )}
 
               <div
-                className="space-y-4 text-sm leading-relaxed whitespace-pre-wrap p-6"
+                className="p-6 hd-report"
                 style={{ border: "2px dashed var(--border)", borderRadius: "var(--radius-wobbly-sm)" }}
               >
-                {report ? report.summary : "No summary generated yet."}
+                {report ? (
+                  <ReactMarkdown>{report.summary}</ReactMarkdown>
+                ) : (
+                  <p className="text-sm">No summary generated yet.</p>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {activeTab === "accounts" && (
-          <NetWorthTab profile={profile} goals={goals} onRefetch={fetchData} />
+          <NetWorthTab profile={profile} goals={goals} accounts={accounts} onRefetch={fetchData} />
         )}
 
         {activeTab === "investments" && <InvestmentsTab />}

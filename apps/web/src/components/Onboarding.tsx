@@ -16,6 +16,7 @@ export function Onboarding({ onCompleted }: OnboardingProps) {
 
   // Form states
   const [age, setAge] = useState("");
+  const [occupation, setOccupation] = useState("");
   const [annualSalary, setAnnualSalary] = useState("");
   const [monthlyTakeHome, setMonthlyTakeHome] = useState("");
   const [monthlyExpenses, setMonthlyExpenses] = useState("");
@@ -45,6 +46,7 @@ export function Onboarding({ onCompleted }: OnboardingProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           age: Number(age),
+          occupation: occupation.trim() || undefined,
           annualSalary: Number(annualSalary),
           monthlyTakeHome: Number(monthlyTakeHome),
           monthlyExpenses: Number(monthlyExpenses),
@@ -156,6 +158,18 @@ export function Onboarding({ onCompleted }: OnboardingProps) {
                     className="hd-input p-3"
                   />
                   <span className="text-[10px] text-neutral-500 mt-1 block">Used to calculate TFSA space accumulation.</span>
+                </div>
+
+                <div>
+                  <label className="block font-bold mb-1">Occupation</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Software Developer"
+                    value={occupation}
+                    onChange={(e) => setOccupation(e.target.value)}
+                    className="hd-input p-3"
+                  />
+                  <span className="text-[10px] text-neutral-500 mt-1 block">Shown on your profile card. Optional.</span>
                 </div>
 
                 <div>

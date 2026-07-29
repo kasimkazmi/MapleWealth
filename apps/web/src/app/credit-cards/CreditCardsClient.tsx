@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "../../lib/auth-client";
 import { Card } from "../../components/Card";
+import { Sidebar } from "../../components/Sidebar";
 import { useDashboard } from "../../hooks/useDashboard";
 import { logout, apiFetch } from "../../lib/api";
 import {
@@ -21,13 +21,15 @@ import {
 
 interface CardDetails {
   id: string;
+  slug: string;
   name: string;
   bank: string;
   brandColor: string;
+  logoUrl: string;
+  cardImageUrl: string;
   fee: number;
   perks: string[];
   tips: string;
-  // Cashback calculation rates
   rates: {
     groceries: number;
     dining: number;
@@ -38,76 +40,47 @@ interface CardDetails {
   referralUrl?: string;
 }
 
-const CREDIT_CARDS: CardDetails[] = [
-  {
-    id: "scotia-momentum",
-    name: "Momentum Infinite Bill-Slasher",
-    bank: "Scotia",
-    brandColor: "#EC111A",
-    fee: 120,
-    perks: [
-      "4% cash back on groceries and recurring bills",
-      "2% cash back on gas and transportation",
-      "1% cash back on all other purchases",
-      "Includes comprehensive travel insurance"
-    ],
-    tips: "Maximize this card by linking your phone bill, internet bill, utilities, and streaming subscriptions directly to it.",
-    rates: { groceries: 0.04, dining: 0.01, recurring: 0.04, other: 0.01 },
-    signupBonus: "10% cash back on all purchases for the first 3 months (up to $2,000 in spend).",
-    referralUrl: "#"
-  },
-  {
-    id: "rogers-red",
-    name: "Rogers Red Telecom Saver",
-    bank: "Rogers Bank",
-    brandColor: "#D6001C",
-    fee: 0,
-    perks: [
-      "2% value towards Rogers/Shaw/Fido bill payments",
-      "1.5% cash back flat-rate on all everyday purchases",
-      "No annual fee",
-      "5 free Roam Like Home days annually"
-    ],
-    tips: "Best overall card if you are a Rogers or Shaw customer. The 1.5% flat-rate cash back beats almost every other no-fee card in Canada.",
-    rates: { groceries: 0.015, dining: 0.015, recurring: 0.015, other: 0.015 },
-    signupBonus: "10% cash back welcome bonus on all purchases up to $100.",
-    referralUrl: "#"
-  },
-  {
-    id: "tangerine-cashback",
-    name: "Tangerine Category Customizer",
-    bank: "Tangerine",
-    brandColor: "#FF6600",
-    fee: 0,
-    perks: [
-      "2% cash back on up to 3 select categories of your choice",
-      "0.5% base reward rate on other categories",
-      "No annual fee",
-      "Cashback paid monthly directly to savings account"
-    ],
-    tips: "Select 'Groceries', 'Restaurants', and 'Recurring Bills' as your 2% categories for optimal daily rewards.",
-    rates: { groceries: 0.02, dining: 0.02, recurring: 0.02, other: 0.005 },
-    signupBonus: "10% cash back in select categories for the first 2 months (up to $100).",
-    referralUrl: "#"
-  },
-  {
-    id: "simplii-cashback",
-    name: "Simplii Foodie Cash Back",
-    bank: "Simplii Financial",
-    brandColor: "#00A650",
-    fee: 0,
-    perks: [
-      "4% rewards on restaurant dining, cafes, and bars",
-      "1.5% on gas, groceries, and pharmacy bills",
-      "0.5% on all other spending",
-      "No annual fee"
-    ],
-    tips: "Keep this card in your wallet specifically for dining out and ordering delivery. It offers the highest dining rewards rate for a no-fee card.",
-    rates: { groceries: 0.015, dining: 0.04, recurring: 0.005, other: 0.005 },
-    signupBonus: "10% cash back on dining for the first 4 months (up to $500 in spend).",
-    referralUrl: "#"
-  }
-];
+interface ApiCreditCardProduct {
+  id: string;
+  slug: string;
+  name: string;
+  bank: string;
+  brandColor: string;
+  logoUrl: string;
+  cardImageUrl: string;
+  fee: string;
+  perks: string[];
+  tips: string;
+  rateGroceries: string;
+  rateDining: string;
+  rateRecurring: string;
+  rateOther: string;
+  signupBonus: string;
+  referralUrl: string | null;
+}
+
+function mapApiCard(card: ApiCreditCardProduct): CardDetails {
+  return {
+    id: card.id,
+    slug: card.slug,
+    name: card.name,
+    bank: card.bank,
+    brandColor: card.brandColor,
+    logoUrl: card.logoUrl,
+    cardImageUrl: card.cardImageUrl,
+    fee: Number(card.fee),
+    perks: card.perks,
+    tips: card.tips,
+    rates: {
+      groceries: Number(card.rateGroceries),
+      dining: Number(card.rateDining),
+      recurring: Number(card.rateRecurring),
+      other: Number(card.rateOther)
+    },
+    signupBonus: card.signupBonus,
+    referralUrl: card.referralUrl ?? undefined
+  };
+}
 
 function bankInitials(bank: string): string {
   return bank
@@ -119,17 +92,58 @@ function bankInitials(bank: string): string {
     .toUpperCase();
 }
 
-function BankBadge({ bank, brandColor, size = "md" }: { bank: string; brandColor: string; size?: "sm" | "md" }) {
+function BankBadge({
+  bank,
+  brandColor,
+  logoUrl,
+  size = "md"
+}: {
+  bank: string;
+  brandColor: string;
+  logoUrl: string;
+  size?: "sm" | "md";
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
   const dimension = size === "sm" ? "w-10 h-10 text-xs" : "w-14 h-14 text-sm";
+
+  if (imgFailed) {
+    return (
+      <div
+        className={`${dimension} shrink-0 rounded-full flex items-center justify-center font-extrabold text-white border-2 border-(--border)`}
+        style={{ background: brandColor }}
+        title={bank}
+        aria-label={`${bank} logo`}
+      >
+        {bankInitials(bank)}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`${dimension} shrink-0 rounded-full flex items-center justify-center font-extrabold text-white border-2 border-(--border)`}
-      style={{ background: brandColor }}
+      className={`${dimension} shrink-0 rounded-full flex items-center justify-center bg-white border-2 border-(--border) p-1.5`}
       title={bank}
-      aria-label={`${bank} logo`}
     >
-      {bankInitials(bank)}
+      <img
+        src={logoUrl}
+        alt={`${bank} logo`}
+        className="w-full h-full object-contain"
+        onError={() => setImgFailed(true)}
+      />
     </div>
+  );
+}
+
+function CardArt({ imageUrl, name }: { imageUrl: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <img
+      src={imageUrl}
+      alt={`${name} card art`}
+      className="w-full h-auto max-h-40 object-contain rounded-lg mb-4 bg-neutral-50 border border-neutral-200"
+      onError={() => setFailed(true)}
+    />
   );
 }
 
@@ -137,6 +151,29 @@ export default function CreditCardsClient() {
   const { data: session } = useSession();
   const router = useRouter();
   const { profile, isPremium } = useDashboard();
+
+  const [cards, setCards] = useState<CardDetails[]>([]);
+  const [cardsLoading, setCardsLoading] = useState(true);
+  const [cardsError, setCardsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch("/credit-cards");
+        if (!res.ok) throw new Error("Failed to load credit card catalog");
+        const data: ApiCreditCardProduct[] = await res.json();
+        if (!cancelled) setCards(data.map(mapApiCard));
+      } catch (err) {
+        if (!cancelled) setCardsError(err instanceof Error ? err.message : "Failed to load credit card catalog");
+      } finally {
+        if (!cancelled) setCardsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleUpgrade = async () => {
     try {
@@ -167,7 +204,7 @@ export default function CreditCardsClient() {
     const rec = Number(spendRecurring) || 0;
     const oth = Number(spendOther) || 0;
 
-    return CREDIT_CARDS.map(card => {
+    return cards.map(card => {
       // Annual gross cashback
       const monthlyGains = 
         (groc * card.rates.groceries) +
@@ -183,82 +220,49 @@ export default function CreditCardsClient() {
         netAnnualGains
       };
     }).sort((a, b) => b.netAnnualGains - a.netAnnualGains);
-  }, [spendGroceries, spendDining, spendRecurring, spendOther]);
+  }, [cards, spendGroceries, spendDining, spendRecurring, spendOther]);
 
   const bestCard = recommendations[0];
 
   return (
     <div className="h-screen overflow-hidden flex">
       {/* Sidebar */}
-      <aside
-        className="w-64 p-6 flex-col justify-between hidden md:flex h-full"
-        style={{ borderRight: "3px solid var(--border)", background: "var(--card)" }}
-      >
-        <div>
-          <div className="flex items-center justify-center mb-8">
-            <img src="/logo.png" alt="MapleWealth Logo" className="w-32 object-contain" />
-          </div>
-
-          <nav className="space-y-2">
-            <Link
-              href="/dashboard"
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
-              style={{ opacity: 0.65 }}
-            >
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </Link>
-            <Link
-              href="/dashboard?tab=accounts"
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
-              style={{ opacity: 0.65 }}
-            >
-              <Wallet className="w-4 h-4" /> Net Worth
-            </Link>
-            <Link
-              href="/dashboard?tab=investments"
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer hover:-rotate-1"
-              style={{ opacity: 0.65 }}
-            >
-              <LineChart className="w-4 h-4" /> Investments
-            </Link>
-            <Link
-              href="/credit-cards"
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-base transition-transform duration-100 cursor-pointer"
-              style={{ background: "var(--postit)", border: "2px solid var(--border)", borderRadius: "var(--radius-wobbly-sm)" }}
-            >
-              <CreditCard className="w-4 h-4" /> Credit Cards
-            </Link>
-          </nav>
-        </div>
-
-        <div className="hd-card hd-card--tight p-4 rotate-1">
-          <div className="text-xs uppercase tracking-wider font-bold mb-2" style={{ opacity: 0.55 }}>User Profile</div>
-          <div className="font-bold text-lg truncate" title={session?.user?.name || session?.user?.email || "Guest User"}>
-            {session?.user?.name || "Guest User"}
-          </div>
-          {session?.user?.name && (
-            <div className="text-xs truncate mb-1" style={{ opacity: 0.65 }}>
-              {session.user.email}
-            </div>
-          )}
-          <div className="text-sm font-bold" style={{ color: "var(--accent-2)" }}>Software Developer</div>
-          <div className="text-sm mt-1 mb-2" style={{ opacity: 0.65 }}>Salary: ${profile?.annualSalary ? Number(profile.annualSalary).toLocaleString() : "0"} CAD</div>
-          
-          {isPremium ? (
-            <div className="text-xs font-bold text-emerald-600 bg-emerald-50 py-1 px-2.5 rounded border border-emerald-300 text-center">
-              ★ Premium Active
-            </div>
-          ) : (
-            <button
-              onClick={handleUpgrade}
-              className="hd-btn w-full text-xs py-1.5 cursor-pointer font-bold block text-center"
-              style={{ background: "var(--postit)" }}
-            >
-              Go Premium ($5/mo)
-            </button>
-          )}
-        </div>
-      </aside>
+      <Sidebar
+        session={session}
+        profile={profile}
+        isPremium={isPremium}
+        onUpgrade={handleUpgrade}
+        navItems={[
+          {
+            key: "dashboard",
+            label: "Dashboard",
+            icon: <LayoutDashboard className="w-4 h-4" />,
+            href: "/dashboard",
+            active: false
+          },
+          {
+            key: "accounts",
+            label: "Net Worth",
+            icon: <Wallet className="w-4 h-4" />,
+            href: "/dashboard?tab=accounts",
+            active: false
+          },
+          {
+            key: "investments",
+            label: "Investments",
+            icon: <LineChart className="w-4 h-4" />,
+            href: "/dashboard?tab=investments",
+            active: false
+          },
+          {
+            key: "credit-cards",
+            label: "Credit Cards",
+            icon: <CreditCard className="w-4 h-4" />,
+            href: "/credit-cards",
+            active: true
+          }
+        ]}
+      />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
@@ -278,7 +282,14 @@ export default function CreditCardsClient() {
 
         {/* Scrollable Main Area */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
-          
+          {cardsLoading ? (
+            <div className="hd-card p-8 text-center text-sm" style={{ opacity: 0.65 }}>Loading credit card catalog...</div>
+          ) : cardsError ? (
+            <div className="hd-card p-8 text-center text-sm text-red-600">{cardsError}</div>
+          ) : cards.length === 0 ? (
+            <div className="hd-card p-8 text-center text-sm" style={{ opacity: 0.65 }}>No credit cards available right now.</div>
+          ) : (
+          <>
           {/* Calculator Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card title="Monthly Spend Inputs" icon={<Calculator className="w-5 h-5" style={{ color: "var(--accent)" }} />} rotate="-rotate-1">
@@ -328,7 +339,7 @@ export default function CreditCardsClient() {
                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
-                      <BankBadge bank={bestCard.bank} brandColor={bestCard.brandColor} />
+                      <BankBadge bank={bestCard.bank} brandColor={bestCard.brandColor} logoUrl={bestCard.logoUrl} />
                       <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">{bestCard.bank}</span>
                     </div>
                     <h3 className="text-3xl font-bold mt-1 text-[var(--accent-2)]">{bestCard.name}</h3>
@@ -368,7 +379,7 @@ export default function CreditCardsClient() {
                   <div>
                     <div className="flex justify-between items-center mb-3">
                       <div className="flex items-center gap-2">
-                        <BankBadge bank={card.bank} brandColor={card.brandColor} size="sm" />
+                        <BankBadge bank={card.bank} brandColor={card.brandColor} logoUrl={card.logoUrl} size="sm" />
                         <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">{card.bank}</span>
                       </div>
                       <span className="text-xs font-bold py-1 px-2.5 bg-neutral-100 rounded border border-neutral-300 text-neutral-600">
@@ -376,7 +387,9 @@ export default function CreditCardsClient() {
                       </span>
                     </div>
 
-                    <h4 className="text-2xl font-bold text-[var(--accent-2)] mb-4">{card.name}</h4>
+                    <h4 className="text-2xl font-bold text-[var(--accent-2)] mb-2">{card.name}</h4>
+
+                    <CardArt imageUrl={card.cardImageUrl} name={card.name} />
 
                     <div className="space-y-3 mb-6">
                       <div className="text-xs font-bold uppercase tracking-widest text-neutral-400">Key Privileges</div>
@@ -415,7 +428,8 @@ export default function CreditCardsClient() {
               ))}
             </div>
           </div>
-
+          </>
+          )}
         </div>
       </main>
     </div>
